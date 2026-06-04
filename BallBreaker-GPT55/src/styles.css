@@ -1,0 +1,221 @@
+:root {
+  font-family:
+    "SFMono-Regular", "Cascadia Mono", "IBM Plex Mono", Menlo, Consolas, monospace,
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  color: #d8ffe2;
+  background: #001006;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+#app::before,
+#app::after {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  content: "";
+  pointer-events: none;
+}
+
+#app::before {
+  background:
+    radial-gradient(circle at 50% 48%, transparent 0 58%, rgba(0, 0, 0, 0.34) 100%),
+    repeating-linear-gradient(
+      0deg,
+      rgba(170, 255, 184, 0.08) 0,
+      rgba(170, 255, 184, 0.08) 1px,
+      rgba(0, 0, 0, 0.16) 1px,
+      rgba(0, 0, 0, 0.16) 4px
+    );
+  mix-blend-mode: screen;
+  opacity: 0.45;
+}
+
+#app::after {
+  background:
+    linear-gradient(90deg, rgba(255, 40, 40, 0.035), rgba(64, 255, 96, 0.035), rgba(64, 128, 255, 0.035)),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 6px,
+      rgba(130, 255, 150, 0.04) 6px,
+      rgba(130, 255, 150, 0.04) 7px
+    );
+  opacity: 0.55;
+}
+
+button {
+  min-width: 10rem;
+  min-height: 3rem;
+  border: 1px solid rgba(128, 255, 157, 0.9);
+  border-radius: 6px;
+  color: #061409;
+  background:
+    linear-gradient(90deg, rgba(110, 255, 137, 0.95), rgba(255, 192, 77, 0.95)),
+    #77ff91;
+  box-shadow:
+    0 0 22px rgba(99, 255, 130, 0.36),
+    inset 0 0 18px rgba(255, 255, 255, 0.28);
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+button:hover {
+  filter: brightness(1.12);
+}
+
+#game {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hud {
+  position: fixed;
+  top: max(16px, env(safe-area-inset-top));
+  left: 50%;
+  z-index: 2;
+  display: flex;
+  gap: 0.75rem;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.hud-pill {
+  display: grid;
+  min-width: 6.5rem;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid rgba(116, 255, 143, 0.46);
+  border-radius: 6px;
+  background:
+    linear-gradient(rgba(3, 22, 9, 0.72), rgba(0, 12, 4, 0.78)),
+    repeating-linear-gradient(0deg, rgba(138, 255, 157, 0.07) 0 1px, transparent 1px 4px);
+  box-shadow:
+    0 0 22px rgba(82, 255, 114, 0.16),
+    inset 0 0 16px rgba(121, 255, 142, 0.08);
+  backdrop-filter: blur(8px);
+}
+
+.hud-pill span {
+  color: rgba(190, 255, 198, 0.7);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hud-pill strong {
+  color: #d8ffe2;
+  text-shadow: 0 0 10px rgba(95, 255, 124, 0.72);
+  font-size: 1.2rem;
+  line-height: 1.1;
+}
+
+.screen {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 200ms ease,
+    visibility 200ms ease;
+}
+
+.screen.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.screen-panel {
+  width: min(31rem, 100%);
+  padding: clamp(1.25rem, 5vw, 2.5rem);
+  border: 1px solid rgba(126, 255, 154, 0.44);
+  border-radius: 8px;
+  background:
+    linear-gradient(rgba(4, 28, 10, 0.82), rgba(0, 13, 4, 0.92)),
+    repeating-linear-gradient(
+      0deg,
+      rgba(156, 255, 171, 0.08) 0,
+      rgba(156, 255, 171, 0.08) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+  box-shadow:
+    0 0 80px rgba(86, 255, 118, 0.16),
+    inset 0 0 42px rgba(100, 255, 122, 0.1);
+  text-align: center;
+  backdrop-filter: blur(20px);
+}
+
+.eyebrow {
+  margin: 0 0 0.65rem;
+  color: #a4ffb1;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+h1,
+h2 {
+  margin: 0;
+  text-shadow:
+    0 0 16px rgba(104, 255, 129, 0.72),
+    0 0 38px rgba(255, 191, 71, 0.24);
+  font-size: clamp(3.2rem, 12vw, 6.4rem);
+  line-height: 0.88;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+h2 {
+  font-size: clamp(2.9rem, 10vw, 5.2rem);
+}
+
+.copy {
+  max-width: 25rem;
+  margin: 1rem auto 1.45rem;
+  color: rgba(219, 255, 224, 0.82);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+@media (max-width: 520px) {
+  .hud {
+    top: max(10px, env(safe-area-inset-top));
+    gap: 0.45rem;
+  }
+
+  .hud-pill {
+    min-width: 5.2rem;
+    padding: 0.45rem 0.58rem;
+  }
+
+  .hud-pill strong {
+    font-size: 1rem;
+  }
+}

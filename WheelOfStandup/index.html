@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wheel of Standup</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0a0a1a;
+      color: #fff;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #canvas-container {
+      flex: 1;
+      position: relative;
+    }
+
+    canvas {
+      display: block;
+      cursor: grab;
+    }
+
+    canvas:active {
+      cursor: grabbing;
+    }
+
+    #winner-banner {
+      background: linear-gradient(135deg, #ff6b35, #f7c948);
+      color: #1a1a2e;
+      padding: 12px 32px;
+      border-radius: 12px;
+      font-size: 1.5rem;
+      font-weight: 700;
+      box-shadow: 0 4px 24px rgba(255, 107, 53, 0.4);
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      text-align: center;
+      align-self: center;
+      min-height: 52px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #winner-banner.visible {
+      opacity: 1;
+    }
+
+    #pointer-indicator {
+      position: absolute;
+      right: 30px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 5;
+      font-size: 2.5rem;
+      filter: drop-shadow(0 0 8px rgba(255, 107, 53, 0.6));
+    }
+
+    #controls {
+      background: #12122a;
+      border-top: 1px solid #2a2a4a;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    #word-input {
+      background: #1a1a3e;
+      border: 2px solid #3a3a6a;
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+      min-width: 220px;
+    }
+
+    #word-input:focus {
+      border-color: #6c63ff;
+    }
+
+    #word-input::placeholder {
+      color: #6a6a8a;
+    }
+
+    #spin-btn {
+      background: linear-gradient(135deg, #6c63ff, #4834d4);
+      color: #fff;
+      border: none;
+      padding: 10px 28px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 2px 12px rgba(108, 99, 255, 0.3);
+    }
+
+    #spin-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(108, 99, 255, 0.5);
+    }
+
+    #spin-btn:active {
+      transform: translateY(0);
+    }
+
+    #spin-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+
+#chip-list {
+      background: #12122a;
+      border-top: 1px solid #2a2a4a;
+      padding: 10px 24px 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #1e1e42;
+      border: 1px solid #3a3a6a;
+      color: #d0d0f0;
+      padding: 5px 10px 5px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+
+    .chip:hover {
+      background: #2a2a55;
+    }
+
+    .chip-x {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      color: #aaa;
+      font-size: 0.7rem;
+      cursor: pointer;
+      border: none;
+      padding: 0;
+      line-height: 1;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .chip-x:hover {
+      background: #ff4444;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div id="canvas-container"></div>
+  <div id="winner-banner"></div>
+  <div id="controls">
+    <input id="word-input" type="text" placeholder="Add a name" autocomplete="off" />
+    <button id="spin-btn">🎰 Spin!</button>
+  </div>
+  <div id="chip-list"></div>
+  <script type="module" src="/src/index.ts"></script>
+</body>
+</html>
