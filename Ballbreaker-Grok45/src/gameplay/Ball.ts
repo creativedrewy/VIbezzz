@@ -1,10 +1,21 @@
 import * as THREE from 'three';
-import { BALL, PADDLE, WORLD } from '../core/Constants.js';
-import { createBallMaterial } from '../shaders/materials.js';
-import { eventBus, Events } from '../core/EventBus.js';
+import { BALL, PADDLE, WORLD } from '../core/Constants';
+import { createBallMaterial } from '../shaders/materials';
+import { eventBus, Events } from '../core/EventBus';
+import type { Paddle } from './Paddle';
 
 export class Ball {
-  constructor(scene) {
+  scene: THREE.Object3D;
+  radius: number;
+  material: THREE.ShaderMaterial;
+  mesh: THREE.Mesh;
+  velocity: THREE.Vector2;
+  speed: number;
+  active = false;
+  launched = false;
+  glow: THREE.Mesh;
+
+  constructor(scene: THREE.Object3D) {
     this.scene = scene;
     this.radius = BALL.RADIUS;
     this.material = createBallMaterial();
@@ -12,8 +23,6 @@ export class Ball {
     this.mesh = new THREE.Mesh(geo, this.material);
     this.velocity = new THREE.Vector2(0, 0);
     this.speed = BALL.SPEED;
-    this.active = false;
-    this.launched = false;
 
     const glowGeo = new THREE.SphereGeometry(this.radius * 1.55, 16, 16);
     this.glow = new THREE.Mesh(
@@ -30,11 +39,11 @@ export class Ball {
     this.resetOnPaddle(0);
   }
 
-  get position() {
+  get position(): THREE.Vector3 {
     return this.mesh.position;
   }
 
-  resetOnPaddle(paddleX) {
+  resetOnPaddle(paddleX: number): void {
     this.launched = false;
     this.active = true;
     this.speed = BALL.SPEED;
@@ -42,7 +51,7 @@ export class Ball {
     this.mesh.position.set(paddleX, PADDLE.Y + PADDLE.HEIGHT * 0.5 + this.radius + 0.05, 0);
   }
 
-  launch(angleOffset = 0) {
+  launch(angleOffset = 0): void {
     if (this.launched) return;
     this.launched = true;
     const angle = Math.PI * 0.5 + angleOffset;
@@ -50,8 +59,10 @@ export class Ball {
     eventBus.emit(Events.BALL_LAUNCH);
   }
 
-  update(dt) {
-    if (this.material.uniforms) this.material.uniforms.uTime.value += dt;
+  update(dt: number): void {
+    if (this.material.uniforms?.uTime) {
+      this.material.uniforms.uTime.value = (this.material.uniforms.uTime.value as number) + dt;
+    }
     if (!this.launched || !this.active) return;
 
     this.mesh.position.x += this.velocity.x * dt;
@@ -76,14 +87,14 @@ export class Ball {
     this._normalizeSpeed();
   }
 
-  stickToPaddle(paddleX) {
+  stickToPaddle(paddleX: number): void {
     if (!this.launched) {
       this.mesh.position.x = paddleX;
       this.mesh.position.y = PADDLE.Y + PADDLE.HEIGHT * 0.5 + this.radius + 0.05;
     }
   }
 
-  collidePaddle(paddle) {
+  collidePaddle(paddle: Paddle): boolean {
     if (!this.launched || this.velocity.y > 0) return false;
     const b = paddle.bounds;
     const px = this.mesh.position.x;
@@ -106,11 +117,11 @@ export class Ball {
     return true;
   }
 
-  isLost() {
+  isLost(): boolean {
     return this.mesh.position.y < PADDLE.Y - 2.5;
   }
 
-  _normalizeSpeed() {
+  private _normalizeSpeed(): void {
     const len = this.velocity.length();
     if (len > 0.001) {
       this.velocity.multiplyScalar(this.speed / len);
@@ -123,11 +134,11 @@ export class Ball {
     }
   }
 
-  dispose() {
+  dispose(): void {
     this.scene.remove(this.mesh);
     this.mesh.geometry.dispose();
     this.material.dispose();
     this.glow.geometry.dispose();
-    this.glow.material.dispose();
+    (this.glow.material as THREE.Material).dispose();
   }
 }

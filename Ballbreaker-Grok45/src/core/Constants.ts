@@ -4,14 +4,14 @@ export const CAMERA = {
   FAR: 200,
   POS: { x: 0, y: -2.2, z: 28 },
   LOOK_AT: { x: 0, y: 1.5, z: 0 },
-};
+} as const;
 
 export const WORLD = {
   WIDTH: 16,
   HEIGHT: 22,
   DEPTH: 1.2,
   WALL_THICKNESS: 0.45,
-};
+} as const;
 
 export const PADDLE = {
   WIDTH: 2.8,
@@ -21,7 +21,7 @@ export const PADDLE = {
   Y: -8.5,
   Z: 0,
   MAX_BOUNCE_ANGLE: Math.PI * 0.65,
-};
+} as const;
 
 export const BALL = {
   RADIUS: 0.28,
@@ -29,7 +29,7 @@ export const BALL = {
   MAX_SPEED: 18,
   SPEED_GAIN: 0.08,
   LAUNCH_ANGLE_SPREAD: 0.35,
-};
+} as const;
 
 export const BRICKS = {
   COLS: 10,
@@ -49,12 +49,12 @@ export const BRICKS = {
     0xaa66ff,
   ],
   POINTS: [60, 50, 40, 30, 20, 10],
-};
+} as const;
 
 export const GAME = {
   START_LIVES: 3,
   WIN_BONUS: 500,
-};
+} as const;
 
 export const COLORS = {
   BG: 0x050510,
@@ -65,9 +65,9 @@ export const COLORS = {
   BALL: 0xffffff,
   FLOOR: 0x0a1028,
   FOG: 0x050510,
-};
+} as const;
 
-export function _readSafeInsets() {
+export function _readSafeInsets(): { top: number; bottom: number } {
   const s = getComputedStyle(document.documentElement);
   return {
     top: parseInt(s.getPropertyValue('--ogp-safe-top-inset'), 10) || 0,
@@ -81,4 +81,6 @@ export const SAFE_ZONE = {
   TOP_PX: Math.max(75, _insets.top),
   BOTTOM_PX: _insets.bottom,
   TOP_PERCENT: 8,
-};
+} as const;
+
+export type ScreenId = 'start' | 'game' | 'over';

@@ -1,6 +1,6 @@
 # Ball Breaker
 
-2.5D Arkanoid-style brick breaker built with Three.js.
+2.5D Arkanoid-style brick breaker built with Three.js + TypeScript.
 
 ## Play
 

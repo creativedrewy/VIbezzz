@@ -1,23 +1,24 @@
-class EventBus {
-  constructor() {
-    this.listeners = new Map();
-  }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type EventCallback = (data?: any) => void;
 
-  on(event, callback) {
+class EventBus {
+  private listeners = new Map<string, Set<EventCallback>>();
+
+  on(event: string, callback: EventCallback): () => void {
     if (!this.listeners.has(event)) this.listeners.set(event, new Set());
-    this.listeners.get(event).add(callback);
+    this.listeners.get(event)!.add(callback);
     return () => this.off(event, callback);
   }
 
-  once(event, callback) {
-    const wrapper = (...args) => {
+  once(event: string, callback: EventCallback): void {
+    const wrapper: EventCallback = (...args) => {
       this.off(event, wrapper);
       callback(...args);
     };
     this.on(event, wrapper);
   }
 
-  off(event, callback) {
+  off(event: string, callback: EventCallback): void {
     const cbs = this.listeners.get(event);
     if (cbs) {
       cbs.delete(callback);
@@ -25,7 +26,7 @@ class EventBus {
     }
   }
 
-  emit(event, data) {
+  emit(event: string, data?: unknown): void {
     const cbs = this.listeners.get(event);
     if (cbs) {
       cbs.forEach((cb) => {
@@ -38,7 +39,7 @@ class EventBus {
     }
   }
 
-  clear(event) {
+  clear(event?: string): void {
     if (event) this.listeners.delete(event);
     else this.listeners.clear();
   }
@@ -60,4 +61,16 @@ export const Events = {
   LIVES_CHANGED: 'lives:changed',
   LEVEL_CLEARED: 'level:cleared',
   PADDLE_HIT: 'paddle:hit',
+} as const;
+
+export type BrickDestroyedPayload = {
+  points: number;
+  remaining: number;
+  position: import('three').Vector3;
+  color: number;
 };
+
+export type ScorePayload = { score: number };
+export type LivesPayload = { lives: number };
+export type ScreenPayload = { screen: string };
+export type GameOverPayload = { won: boolean; score: number };

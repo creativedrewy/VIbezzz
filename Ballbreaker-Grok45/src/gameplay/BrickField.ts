@@ -1,34 +1,52 @@
 import * as THREE from 'three';
-import { BRICKS } from '../core/Constants.js';
-import { createBrickMaterial } from '../shaders/materials.js';
-import { eventBus, Events } from '../core/EventBus.js';
-import { gameState } from '../core/GameState.js';
+import { BRICKS } from '../core/Constants';
+import { createBrickMaterial } from '../shaders/materials';
+import { eventBus, Events } from '../core/EventBus';
+import { gameState } from '../core/GameState';
+import type { Ball } from './Ball';
+
+export type BrickUserData = {
+  alive: boolean;
+  points: number;
+  halfW: number;
+  halfH: number;
+  row: number;
+  col: number;
+};
+
+type BrickMesh = THREE.Mesh<THREE.BoxGeometry, THREE.ShaderMaterial> & {
+  userData: BrickUserData;
+};
 
 export class BrickField {
-  constructor(scene) {
+  scene: THREE.Object3D;
+  group: THREE.Group;
+  bricks: BrickMesh[] = [];
+  materials: THREE.ShaderMaterial[] = [];
+  private _sharedGeo: THREE.BoxGeometry;
+
+  constructor(scene: THREE.Object3D) {
     this.scene = scene;
     this.group = new THREE.Group();
-    this.bricks = [];
-    this.materials = [];
     this._sharedGeo = new THREE.BoxGeometry(BRICKS.WIDTH, BRICKS.HEIGHT, BRICKS.DEPTH);
     scene.add(this.group);
     this.build();
   }
 
-  build() {
+  build(): void {
     this.clear();
     const totalW = BRICKS.COLS * BRICKS.WIDTH + (BRICKS.COLS - 1) * BRICKS.GAP_X;
     const startX = -totalW * 0.5 + BRICKS.WIDTH * 0.5;
     let count = 0;
 
     for (let row = 0; row < BRICKS.ROWS; row++) {
-      const color = BRICKS.COLORS[row % BRICKS.COLORS.length];
-      const points = BRICKS.POINTS[row % BRICKS.POINTS.length];
+      const color = BRICKS.COLORS[row % BRICKS.COLORS.length]!;
+      const points = BRICKS.POINTS[row % BRICKS.POINTS.length]!;
       const mat = createBrickMaterial(color);
       this.materials.push(mat);
 
       for (let col = 0; col < BRICKS.COLS; col++) {
-        const mesh = new THREE.Mesh(this._sharedGeo, mat);
+        const mesh = new THREE.Mesh(this._sharedGeo, mat) as BrickMesh;
         const x = startX + col * (BRICKS.WIDTH + BRICKS.GAP_X);
         const y = BRICKS.START_Y - row * (BRICKS.HEIGHT + BRICKS.GAP_Y);
         mesh.position.set(x, y, 0);
@@ -48,7 +66,7 @@ export class BrickField {
     gameState.bricksRemaining = count;
   }
 
-  clear() {
+  clear(): void {
     for (const b of this.bricks) {
       this.group.remove(b);
     }
@@ -57,13 +75,15 @@ export class BrickField {
     this.materials = [];
   }
 
-  update(dt) {
+  update(dt: number): void {
     for (const m of this.materials) {
-      if (m.uniforms) m.uniforms.uTime.value += dt;
+      if (m.uniforms?.uTime) {
+        m.uniforms.uTime.value = (m.uniforms.uTime.value as number) + dt;
+      }
     }
   }
 
-  collideBall(ball) {
+  collideBall(ball: Ball): BrickMesh | null {
     if (!ball.launched) return null;
     const px = ball.position.x;
     const py = ball.position.y;
@@ -99,22 +119,24 @@ export class BrickField {
     return null;
   }
 
-  destroyBrick(brick) {
+  destroyBrick(brick: BrickMesh): void {
     if (!brick.userData.alive) return;
     brick.userData.alive = false;
     brick.visible = false;
     gameState.bricksRemaining = Math.max(0, gameState.bricksRemaining - 1);
     gameState.score += brick.userData.points;
+
+    const colorUniform = brick.material.uniforms?.uColor?.value as THREE.Color | undefined;
     eventBus.emit(Events.BRICK_DESTROYED, {
       points: brick.userData.points,
       remaining: gameState.bricksRemaining,
       position: brick.position.clone(),
-      color: brick.material.uniforms?.uColor?.value?.getHex?.() ?? 0xffffff,
+      color: colorUniform?.getHex?.() ?? 0xffffff,
     });
     eventBus.emit(Events.SCORE_CHANGED, { score: gameState.score });
   }
 
-  dispose() {
+  dispose(): void {
     this.clear();
     this.scene.remove(this.group);
     this._sharedGeo.dispose();

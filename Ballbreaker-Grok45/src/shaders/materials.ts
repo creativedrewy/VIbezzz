@@ -173,7 +173,7 @@ const paddleFragment = /* glsl */ `
   }
 `;
 
-export function createPlasmaMaterial() {
+export function createPlasmaMaterial(): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
     uniforms: {
       uTime: { value: 0 },
@@ -186,7 +186,7 @@ export function createPlasmaMaterial() {
   });
 }
 
-export function createBrickMaterial(colorHex) {
+export function createBrickMaterial(colorHex: number): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
     uniforms: {
       uTime: { value: 0 },
@@ -198,7 +198,7 @@ export function createBrickMaterial(colorHex) {
   });
 }
 
-export function createBallMaterial() {
+export function createBallMaterial(): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
     uniforms: {
       uTime: { value: 0 },
@@ -209,7 +209,7 @@ export function createBallMaterial() {
   });
 }
 
-export function createWallMaterial() {
+export function createWallMaterial(): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
     uniforms: {
       uTime: { value: 0 },
@@ -220,7 +220,7 @@ export function createWallMaterial() {
   });
 }
 
-export function createPaddleMaterial(colorHex = 0x44d4ff, metal = 0.85) {
+export function createPaddleMaterial(colorHex = 0x44d4ff, metal = 0.85): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
     uniforms: {
       uTime: { value: 0 },

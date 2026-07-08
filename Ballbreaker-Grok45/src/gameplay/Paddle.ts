@@ -1,25 +1,43 @@
 import * as THREE from 'three';
-import { PADDLE, WORLD } from '../core/Constants.js';
-import { createPaddleMaterial } from '../shaders/materials.js';
+import { PADDLE, WORLD } from '../core/Constants';
+import { createPaddleMaterial } from '../shaders/materials';
+import type { InputSystem } from '../systems/InputSystem';
+
+export type PaddleBounds = {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+  centerX: number;
+  halfWidth: number;
+};
+
+type Disposable = { dispose: () => void };
 
 export class Paddle {
-  constructor(scene) {
+  scene: THREE.Object3D;
+  halfWidth: number;
+  velocityX = 0;
+  mesh: THREE.Group;
+  materials: THREE.ShaderMaterial[] = [];
+  material!: THREE.ShaderMaterial;
+  private _disposables: Disposable[] = [];
+  private _maxX: number;
+
+  constructor(scene: THREE.Object3D) {
     this.scene = scene;
     this.halfWidth = PADDLE.WIDTH * 0.5;
-    this.velocityX = 0;
-    this._disposables = [];
 
     this.mesh = new THREE.Group();
     this.mesh.position.set(0, PADDLE.Y, PADDLE.Z);
 
-    this.materials = [];
     this._buildBody();
 
     scene.add(this.mesh);
     this._maxX = WORLD.WIDTH * 0.5 - WORLD.WALL_THICKNESS - this.halfWidth - 0.05;
   }
 
-  _add(mesh) {
+  private _add(mesh: THREE.Mesh): THREE.Mesh {
     this.mesh.add(mesh);
     this._disposables.push(mesh.geometry);
     if (Array.isArray(mesh.material)) {
@@ -30,7 +48,7 @@ export class Paddle {
     return mesh;
   }
 
-  _buildBody() {
+  private _buildBody(): void {
     const w = PADDLE.WIDTH;
     const h = PADDLE.HEIGHT;
     const d = PADDLE.DEPTH;
@@ -42,23 +60,18 @@ export class Paddle {
     this.materials = [bodyMat, darkMat, accentMat, capMat];
     this.material = bodyMat;
 
-    // Main chassis — wide, deep bar
     const body = this._add(new THREE.Mesh(new THREE.BoxGeometry(w * 0.78, h * 0.72, d * 0.88), bodyMat));
     body.position.set(0, -h * 0.05, 0);
 
-    // Upper bevel / face plate (stepped for depth)
     const face = this._add(new THREE.Mesh(new THREE.BoxGeometry(w * 0.72, h * 0.38, d * 0.55), accentMat));
     face.position.set(0, h * 0.28, d * 0.12);
 
-    // Front bumper strip (catch surface for the ball)
     const bumper = this._add(new THREE.Mesh(new THREE.BoxGeometry(w * 0.7, h * 0.22, d * 0.22), accentMat));
     bumper.position.set(0, h * 0.42, d * 0.32);
 
-    // Lower keel for mass / silhouette
     const keel = this._add(new THREE.Mesh(new THREE.BoxGeometry(w * 0.55, h * 0.28, d * 0.5), darkMat));
     keel.position.set(0, -h * 0.38, -d * 0.05);
 
-    // Side pods (classic Arkanoid wing look)
     const podGeo = new THREE.BoxGeometry(w * 0.16, h * 0.95, d * 1.05);
     const leftPod = this._add(new THREE.Mesh(podGeo, capMat));
     leftPod.position.set(-w * 0.42, 0, 0.02);
@@ -66,7 +79,6 @@ export class Paddle {
     rightPod.position.set(w * 0.42, 0, 0.02);
     this._disposables.push(rightPod.geometry);
 
-    // Outer caps — slightly angled via scale for a chunkier end
     const capGeo = new THREE.BoxGeometry(w * 0.12, h * 1.05, d * 0.75);
     const leftCap = this._add(new THREE.Mesh(capGeo, bodyMat));
     leftCap.position.set(-w * 0.48, 0.02, d * 0.08);
@@ -76,7 +88,6 @@ export class Paddle {
     rightCap.rotation.z = -0.12;
     this._disposables.push(rightCap.geometry);
 
-    // Top rail glow
     const rail = this._add(
       new THREE.Mesh(
         new THREE.BoxGeometry(w * 0.62, h * 0.1, d * 0.18),
@@ -85,7 +96,6 @@ export class Paddle {
     );
     rail.position.set(0, h * 0.52, d * 0.38);
 
-    // Underside shadow bar for 3D read
     const shadow = this._add(
       new THREE.Mesh(
         new THREE.BoxGeometry(w * 0.68, h * 0.08, d * 0.7),
@@ -94,11 +104,10 @@ export class Paddle {
     );
     shadow.position.set(0, -h * 0.55, -0.05);
 
-    // Subtle pitch so the front lip reads in 2.5D camera
     this.mesh.rotation.x = -0.22;
   }
 
-  get bounds() {
+  get bounds(): PaddleBounds {
     const p = this.mesh.position;
     return {
       minX: p.x - this.halfWidth,
@@ -110,11 +119,11 @@ export class Paddle {
     };
   }
 
-  setTargetX(x) {
+  setTargetX(x: number): void {
     this.mesh.position.x = THREE.MathUtils.clamp(x, -this._maxX, this._maxX);
   }
 
-  update(dt, input, playfieldHalfWidth) {
+  update(dt: number, input: InputSystem, playfieldHalfWidth: number): void {
     const prev = this.mesh.position.x;
     if (input.moveX !== 0) {
       this.mesh.position.x += input.moveX * PADDLE.SPEED * dt;
@@ -124,21 +133,21 @@ export class Paddle {
       this.mesh.position.x = THREE.MathUtils.clamp(target, -this._maxX, this._maxX);
     }
     this.velocityX = (this.mesh.position.x - prev) / Math.max(dt, 1e-5);
-    const t = this.material.uniforms.uTime.value + dt;
+    const t = (this.material.uniforms.uTime.value as number) + dt;
     for (const m of this.materials) {
       if (m.uniforms?.uTime) m.uniforms.uTime.value = t;
     }
   }
 
-  reset() {
+  reset(): void {
     this.mesh.position.x = 0;
     this.velocityX = 0;
   }
 
-  dispose() {
+  dispose(): void {
     this.scene.remove(this.mesh);
     for (const d of this._disposables) {
-      if (d && typeof d.dispose === 'function') d.dispose();
+      d.dispose();
     }
     this._disposables = [];
   }

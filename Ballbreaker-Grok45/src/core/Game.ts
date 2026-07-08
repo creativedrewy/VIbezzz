@@ -1,23 +1,42 @@
 import * as THREE from 'three';
-import { CAMERA, COLORS, WORLD, BALL, GAME } from './Constants.js';
-import { eventBus, Events } from './EventBus.js';
-import { gameState } from './GameState.js';
-import { InputSystem } from '../systems/InputSystem.js';
-import { Paddle } from '../gameplay/Paddle.js';
-import { Ball } from '../gameplay/Ball.js';
-import { BrickField } from '../gameplay/BrickField.js';
-import { UIManager } from '../ui/UIManager.js';
-import { createPlasmaMaterial, createWallMaterial } from '../shaders/materials.js';
+import { CAMERA, COLORS, WORLD, BALL, GAME } from './Constants';
+import { eventBus, Events, type BrickDestroyedPayload } from './EventBus';
+import { gameState } from './GameState';
+import { InputSystem } from '../systems/InputSystem';
+import { Paddle } from '../gameplay/Paddle';
+import { Ball } from '../gameplay/Ball';
+import { BrickField } from '../gameplay/BrickField';
+import { UIManager } from '../ui/UIManager';
+import { createPlasmaMaterial, createWallMaterial } from '../shaders/materials';
+
+type Particle = {
+  mesh: THREE.Mesh<THREE.BoxGeometry, THREE.MeshBasicMaterial>;
+  vel: THREE.Vector3;
+  life: number;
+  age: number;
+};
 
 export class Game {
+  clock: THREE.Clock;
+  shaderMats: THREE.ShaderMaterial[] = [];
+  particles: Particle[] = [];
+  renderer!: THREE.WebGLRenderer;
+  scene!: THREE.Scene;
+  camera!: THREE.PerspectiveCamera;
+  playfieldRoot!: THREE.Group;
+  input!: InputSystem;
+  paddle!: Paddle;
+  ball!: Ball;
+  bricks!: BrickField;
+  playfieldHalf = 0;
+  ui!: UIManager;
+
   constructor() {
     this.clock = new THREE.Clock();
-    this.shaderMats = [];
-    this.particles = [];
     this.init();
   }
 
-  init() {
+  init(): void {
     this.setupRenderer();
     this.setupScene();
     this.setupCamera();
@@ -29,7 +48,7 @@ export class Game {
     this.renderer.setAnimationLoop(() => this.animate());
   }
 
-  setupRenderer() {
+  setupRenderer(): void {
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
       powerPreference: 'high-performance',
@@ -37,16 +56,18 @@ export class Game {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setClearColor(COLORS.BG, 1);
-    document.getElementById('game-container').appendChild(this.renderer.domElement);
+    const container = document.getElementById('game-container');
+    if (!container) throw new Error('Missing #game-container');
+    container.appendChild(this.renderer.domElement);
     window.addEventListener('resize', () => this.onWindowResize());
   }
 
-  setupScene() {
+  setupScene(): void {
     this.scene = new THREE.Scene();
     this.scene.fog = new THREE.FogExp2(COLORS.FOG, 0.012);
   }
 
-  setupCamera() {
+  setupCamera(): void {
     this.camera = new THREE.PerspectiveCamera(
       CAMERA.FOV,
       window.innerWidth / window.innerHeight,
@@ -57,7 +78,7 @@ export class Game {
     this.camera.lookAt(CAMERA.LOOK_AT.x, CAMERA.LOOK_AT.y, CAMERA.LOOK_AT.z);
   }
 
-  setupLights() {
+  setupLights(): void {
     this.scene.add(new THREE.AmbientLight(COLORS.AMBIENT, 0.65));
     const key = new THREE.DirectionalLight(COLORS.DIRECTIONAL, 0.9);
     key.position.set(4, 10, 12);
@@ -67,7 +88,7 @@ export class Game {
     this.scene.add(rim);
   }
 
-  setupArena() {
+  setupArena(): void {
     this.playfieldRoot = new THREE.Group();
     this.scene.add(this.playfieldRoot);
 
@@ -82,7 +103,6 @@ export class Game {
     bg.position.z = -3.2;
     this.playfieldRoot.add(bg);
 
-    // Interior back panel — sits fully behind walls (no volume overlap)
     const floorMat = new THREE.MeshStandardMaterial({
       color: COLORS.FLOOR,
       metalness: 0.4,
@@ -99,7 +119,6 @@ export class Game {
     floor.position.set(0, -t * 0.15, -d * 0.5 - 0.12);
     this.playfieldRoot.add(floor);
 
-    // U-frame: sides stop under the top bar so corners never share volume
     const wallMat = createWallMaterial();
     this.shaderMats.push(wallMat);
 
@@ -110,7 +129,6 @@ export class Game {
     const right = new THREE.Mesh(sideGeo, wallMat);
     right.position.set(w * 0.5, 0, 0);
 
-    // Top bar bridges outer faces of side walls, seated on their top edges
     const topW = w + t;
     const topGeo = new THREE.BoxGeometry(topW, t, d);
     const top = new THREE.Mesh(topGeo, wallMat);
@@ -127,7 +145,7 @@ export class Game {
     this.playfieldRoot.position.y = 0.4;
   }
 
-  setupGameplay() {
+  setupGameplay(): void {
     this.input = new InputSystem(this.renderer.domElement);
     this.paddle = new Paddle(this.playfieldRoot);
     this.ball = new Ball(this.playfieldRoot);
@@ -136,18 +154,21 @@ export class Game {
     this.shaderMats.push(this.paddle.material, this.ball.material, ...this.bricks.materials);
   }
 
-  setupUI() {
+  setupUI(): void {
     this.ui = new UIManager();
     this.ui.setScreen('start');
   }
 
-  setupEventListeners() {
+  setupEventListeners(): void {
     eventBus.on(Events.GAME_START, () => this.startGame());
     eventBus.on(Events.GAME_RESTART, () => this.restartGame());
-    eventBus.on(Events.BRICK_DESTROYED, (data) => this.spawnBurst(data.position, data.color));
+    eventBus.on(Events.BRICK_DESTROYED, (data) => {
+      const payload = data as BrickDestroyedPayload;
+      this.spawnBurst(payload.position, payload.color);
+    });
   }
 
-  startGame() {
+  startGame(): void {
     gameState.reset();
     gameState.isPlaying = true;
     gameState.screen = 'game';
@@ -161,7 +182,7 @@ export class Game {
     eventBus.emit(Events.LIVES_CHANGED, { lives: gameState.lives });
   }
 
-  clearParticles() {
+  clearParticles(): void {
     for (const p of this.particles) {
       this.playfieldRoot.remove(p.mesh);
       p.mesh.geometry.dispose();
@@ -170,11 +191,11 @@ export class Game {
     this.particles = [];
   }
 
-  restartGame() {
+  restartGame(): void {
     this.startGame();
   }
 
-  endGame(won) {
+  endGame(won: boolean): void {
     gameState.isPlaying = false;
     gameState.won = won;
     if (won) gameState.score += GAME.WIN_BONUS;
@@ -182,7 +203,7 @@ export class Game {
     eventBus.emit(Events.GAME_OVER, { won, score: gameState.score });
   }
 
-  loseBall() {
+  loseBall(): void {
     gameState.lives -= 1;
     eventBus.emit(Events.LIVES_CHANGED, { lives: gameState.lives });
     eventBus.emit(Events.BALL_LOST);
@@ -193,7 +214,7 @@ export class Game {
     this.ball.resetOnPaddle(this.paddle.mesh.position.x);
   }
 
-  spawnBurst(position, colorHex) {
+  spawnBurst(position: THREE.Vector3, colorHex: number): void {
     const color = new THREE.Color(colorHex || 0xffffff);
     for (let i = 0; i < 10; i++) {
       const geo = new THREE.BoxGeometry(0.12, 0.12, 0.12);
@@ -215,9 +236,9 @@ export class Game {
     }
   }
 
-  updateParticles(dt) {
+  updateParticles(dt: number): void {
     for (let i = this.particles.length - 1; i >= 0; i--) {
-      const p = this.particles[i];
+      const p = this.particles[i]!;
       p.age += dt;
       p.mesh.position.x += p.vel.x * dt;
       p.mesh.position.y += p.vel.y * dt;
@@ -234,7 +255,7 @@ export class Game {
     }
   }
 
-  animate() {
+  animate(): void {
     const dt = Math.min(this.clock.getDelta(), 0.1);
     const t = this.clock.elapsedTime;
 
@@ -277,7 +298,7 @@ export class Game {
     this.renderer.render(this.scene, this.camera);
   }
 
-  onWindowResize() {
+  onWindowResize(): void {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
