@@ -112,27 +112,6 @@
         font-variant-numeric: tabular-nums;
         margin-left: 0.4em;
       }
-      #launch-hint {
-        position: absolute;
-        left: 50%;
-        bottom: max(18%, var(--ogp-safe-bottom-inset, 0px));
-        transform: translateX(-50%);
-        color: rgba(200, 230, 255, 0.85);
-        font-size: clamp(0.8rem, 2vw, 1rem);
-        letter-spacing: 0.2em;
-        text-transform: uppercase;
-        text-shadow: 0 0 16px rgba(80, 180, 255, 0.7);
-        pointer-events: none;
-        z-index: 5;
-        opacity: 0;
-        transition: opacity 0.25s ease;
-        animation: pulse 1.4s ease-in-out infinite;
-      }
-      #launch-hint.visible { opacity: 1; }
-      @keyframes pulse {
-        0%, 100% { opacity: 0.55; }
-        50% { opacity: 1; }
-      }
       .score-big {
         font-size: clamp(2rem, 6vw, 3.5rem);
         color: #7cf0ff;
@@ -149,11 +128,8 @@
         <div>Lives<span class="value" id="hud-lives">3</span></div>
         <div>Level<span class="value" id="hud-level">1</span></div>
       </div>
-      <div id="launch-hint">Click / Space to launch</div>
-
       <div id="screen-start" class="overlay visible">
         <h1>Ball Breaker</h1>
-        <div class="subtitle">Neon Arkanoid</div>
         <p>Destroy every brick. Move with mouse, touch, or ← → / A D. Launch with click, tap, or Space.</p>
         <button class="btn" id="btn-start" type="button">Start Game</button>
       </div>

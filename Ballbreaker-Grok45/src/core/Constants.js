@@ -15,8 +15,8 @@ export const WORLD = {
 
 export const PADDLE = {
   WIDTH: 2.8,
-  HEIGHT: 0.35,
-  DEPTH: 0.7,
+  HEIGHT: 0.42,
+  DEPTH: 1.15,
   SPEED: 18,
   Y: -8.5,
   Z: 0,

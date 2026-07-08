@@ -71,43 +71,56 @@ export class Game {
     this.playfieldRoot = new THREE.Group();
     this.scene.add(this.playfieldRoot);
 
+    const t = WORLD.WALL_THICKNESS;
+    const w = WORLD.WIDTH;
+    const h = WORLD.HEIGHT;
+    const d = WORLD.DEPTH;
+
     const plasma = createPlasmaMaterial();
     this.shaderMats.push(plasma);
     const bg = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), plasma);
-    bg.position.z = -3;
+    bg.position.z = -3.2;
     this.playfieldRoot.add(bg);
 
+    // Interior back panel — sits fully behind walls (no volume overlap)
     const floorMat = new THREE.MeshStandardMaterial({
       color: COLORS.FLOOR,
       metalness: 0.4,
       roughness: 0.65,
       emissive: 0x0a1630,
       emissiveIntensity: 0.4,
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1,
     });
-    const floor = new THREE.Mesh(
-      new THREE.BoxGeometry(WORLD.WIDTH + 1, WORLD.HEIGHT + 1, 0.25),
-      floorMat,
-    );
-    floor.position.z = -0.55;
+    const panelW = w - t;
+    const panelH = h - t * 0.5;
+    const floor = new THREE.Mesh(new THREE.BoxGeometry(panelW, panelH, 0.2), floorMat);
+    floor.position.set(0, -t * 0.15, -d * 0.5 - 0.12);
     this.playfieldRoot.add(floor);
 
+    // U-frame: sides stop under the top bar so corners never share volume
     const wallMat = createWallMaterial();
     this.shaderMats.push(wallMat);
-    const wallH = WORLD.HEIGHT + WORLD.WALL_THICKNESS * 2;
-    const wallGeo = new THREE.BoxGeometry(WORLD.WALL_THICKNESS, wallH, WORLD.DEPTH);
-    const left = new THREE.Mesh(wallGeo, wallMat);
-    left.position.set(-WORLD.WIDTH * 0.5, 0, 0);
-    const right = new THREE.Mesh(wallGeo, wallMat);
-    right.position.set(WORLD.WIDTH * 0.5, 0, 0);
-    const topGeo = new THREE.BoxGeometry(WORLD.WIDTH + WORLD.WALL_THICKNESS * 2, WORLD.WALL_THICKNESS, WORLD.DEPTH);
+
+    const sideH = h;
+    const sideGeo = new THREE.BoxGeometry(t, sideH, d);
+    const left = new THREE.Mesh(sideGeo, wallMat);
+    left.position.set(-(w * 0.5), 0, 0);
+    const right = new THREE.Mesh(sideGeo, wallMat);
+    right.position.set(w * 0.5, 0, 0);
+
+    // Top bar bridges outer faces of side walls, seated on their top edges
+    const topW = w + t;
+    const topGeo = new THREE.BoxGeometry(topW, t, d);
     const top = new THREE.Mesh(topGeo, wallMat);
-    top.position.set(0, WORLD.HEIGHT * 0.5, 0);
+    top.position.set(0, h * 0.5 + t * 0.5, 0);
     this.playfieldRoot.add(left, right, top);
 
-    const railGeo = new THREE.BoxGeometry(WORLD.WIDTH - WORLD.WALL_THICKNESS, 0.06, 0.08);
+    const railGeo = new THREE.BoxGeometry(w - t * 2, 0.06, 0.08);
     const railMat = new THREE.MeshBasicMaterial({ color: 0x55aaff, transparent: true, opacity: 0.35 });
     const rail = new THREE.Mesh(railGeo, railMat);
-    rail.position.set(0, -WORLD.HEIGHT * 0.5 + 1.2, 0.4);
+    rail.position.set(0, -h * 0.5 + 1.2, d * 0.35);
     this.playfieldRoot.add(rail);
 
     this.playfieldRoot.rotation.x = -0.18;
@@ -144,7 +157,6 @@ export class Game {
     this.ball.resetOnPaddle(this.paddle.mesh.position.x);
     this.ui.syncHud();
     this.ui.setScreen('game');
-    this.ui.setLaunchHint(true);
     eventBus.emit(Events.SCORE_CHANGED, { score: 0 });
     eventBus.emit(Events.LIVES_CHANGED, { lives: gameState.lives });
   }
@@ -179,7 +191,6 @@ export class Game {
       return;
     }
     this.ball.resetOnPaddle(this.paddle.mesh.position.x);
-    this.ui.setLaunchHint(true);
   }
 
   spawnBurst(position, colorHex) {
@@ -242,7 +253,6 @@ export class Game {
         if (this.input.consumeLaunch()) {
           const spread = (Math.random() - 0.5) * BALL.LAUNCH_ANGLE_SPREAD;
           this.ball.launch(spread);
-          this.ui.setLaunchHint(false);
         }
       } else {
         this.input.consumeLaunch();

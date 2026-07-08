@@ -6,7 +6,6 @@ export class UIManager {
     this.screenStart = document.getElementById('screen-start');
     this.screenOver = document.getElementById('screen-over');
     this.hud = document.getElementById('hud');
-    this.launchHint = document.getElementById('launch-hint');
     this.hudScore = document.getElementById('hud-score');
     this.hudLives = document.getElementById('hud-lives');
     this.hudLevel = document.getElementById('hud-level');
@@ -33,10 +32,6 @@ export class UIManager {
     this.screenStart.classList.toggle('visible', screen === 'start');
     this.screenOver.classList.toggle('visible', screen === 'over');
     this.hud.classList.toggle('visible', screen === 'game');
-  }
-
-  setLaunchHint(visible) {
-    this.launchHint.classList.toggle('visible', visible);
   }
 
   showGameOver(won, score) {

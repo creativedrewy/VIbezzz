@@ -126,17 +126,49 @@ const neonWallFragment = /* glsl */ `
   }
 `;
 
+const paddleVertex = /* glsl */ `
+  varying vec2 vUv;
+  varying vec3 vNormal;
+  varying vec3 vView;
+  varying vec3 vWorldPos;
+  void main() {
+    vUv = uv;
+    vec4 mv = modelViewMatrix * vec4(position, 1.0);
+    vNormal = normalize(normalMatrix * normal);
+    vView = normalize(-mv.xyz);
+    vWorldPos = (modelMatrix * vec4(position, 1.0)).xyz;
+    gl_Position = projectionMatrix * mv;
+  }
+`;
+
 const paddleFragment = /* glsl */ `
   uniform float uTime;
   uniform vec3 uColor;
+  uniform float uMetal;
   varying vec2 vUv;
   varying vec3 vNormal;
+  varying vec3 vView;
+  varying vec3 vWorldPos;
 
   void main() {
-    float band = smoothstep(0.0, 0.4, vUv.y) * smoothstep(1.0, 0.55, vUv.y);
-    float sweep = 0.6 + 0.4 * sin(vUv.x * 12.0 - uTime * 6.0);
-    float rim = pow(1.0 - abs(dot(normalize(vNormal), vec3(0.0, 0.2, 1.0))), 2.0);
-    vec3 col = uColor * (0.35 + 0.5 * band * sweep) + vec3(0.5, 0.9, 1.0) * rim;
+    vec3 N = normalize(vNormal);
+    vec3 V = normalize(vView);
+    vec3 L = normalize(vec3(0.35, 0.7, 0.9));
+    float ndl = max(dot(N, L), 0.0);
+    float halfLambert = ndl * 0.55 + 0.45;
+    float rim = pow(1.0 - max(dot(N, V), 0.0), 2.4);
+    float fresnel = pow(1.0 - max(dot(N, V), 0.0), 3.0);
+    vec3 H = normalize(L + V);
+    float spec = pow(max(dot(N, H), 0.0), 48.0) * uMetal;
+    float edgeGlow = smoothstep(0.0, 0.12, vUv.x) * smoothstep(1.0, 0.88, vUv.x);
+    edgeGlow *= smoothstep(0.0, 0.2, vUv.y) * smoothstep(1.0, 0.75, vUv.y);
+    float sweep = 0.75 + 0.25 * sin(vUv.x * 10.0 - uTime * 5.0 + vWorldPos.x);
+    vec3 base = uColor * halfLambert * sweep;
+    vec3 col = base * (0.55 + 0.45 * edgeGlow);
+    col += uColor * rim * 0.85;
+    col += vec3(0.75, 0.95, 1.0) * fresnel * 0.55;
+    col += vec3(1.0) * spec * 1.4;
+    col += vec3(0.2, 0.55, 0.9) * (1.0 - edgeGlow) * 0.15;
     gl_FragColor = vec4(col, 1.0);
   }
 `;
@@ -188,13 +220,14 @@ export function createWallMaterial() {
   });
 }
 
-export function createPaddleMaterial() {
+export function createPaddleMaterial(colorHex = 0x44d4ff, metal = 0.85) {
   return new THREE.ShaderMaterial({
     uniforms: {
       uTime: { value: 0 },
-      uColor: { value: new THREE.Color(0x44d4ff) },
+      uColor: { value: new THREE.Color(colorHex) },
+      uMetal: { value: metal },
     },
-    vertexShader: plasmaVertex,
+    vertexShader: paddleVertex,
     fragmentShader: paddleFragment,
   });
 }
