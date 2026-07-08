@@ -2,6 +2,7 @@ import { eventBus, Events } from '../core/EventBus';
 import { gameState } from '../core/GameState';
 import type { ScreenId } from '../core/Constants';
 import type { LivesPayload, ScorePayload, ScreenPayload } from '../core/EventBus';
+import { LEVELS, LEVEL_COUNT, getLevel, clampLevel } from '../level/Levels';
 
 function requireEl<T extends HTMLElement>(id: string): T {
   const el = document.getElementById(id);
@@ -21,6 +22,10 @@ export class UIManager {
   overScore: HTMLElement;
   btnStart: HTMLButtonElement;
   btnRestart: HTMLButtonElement;
+  btnMenu: HTMLButtonElement;
+  levelGrid: HTMLElement;
+  levelName: HTMLElement;
+  selectedLevel = 1;
 
   constructor() {
     this.screenStart = requireEl('screen-start');
@@ -34,9 +39,21 @@ export class UIManager {
     this.overScore = requireEl('over-score');
     this.btnStart = requireEl<HTMLButtonElement>('btn-start');
     this.btnRestart = requireEl<HTMLButtonElement>('btn-restart');
+    this.btnMenu = requireEl<HTMLButtonElement>('btn-menu');
+    this.levelGrid = requireEl('level-grid');
+    this.levelName = requireEl('level-name');
 
-    this.btnStart.addEventListener('click', () => eventBus.emit(Events.GAME_START));
-    this.btnRestart.addEventListener('click', () => eventBus.emit(Events.GAME_RESTART));
+    this.buildLevelButtons();
+
+    this.btnStart.addEventListener('click', () => {
+      eventBus.emit(Events.GAME_START, { level: this.selectedLevel });
+    });
+    this.btnRestart.addEventListener('click', () => {
+      eventBus.emit(Events.GAME_RESTART);
+    });
+    this.btnMenu.addEventListener('click', () => {
+      eventBus.emit(Events.GAME_MENU);
+    });
 
     eventBus.on(Events.SCORE_CHANGED, (data) => {
       const { score } = data as ScorePayload;
@@ -50,6 +67,47 @@ export class UIManager {
       const { screen } = data as ScreenPayload;
       this.setScreen(screen as ScreenId);
     });
+
+    this.selectLevel(1);
+  }
+
+  private buildLevelButtons(): void {
+    this.levelGrid.replaceChildren();
+    for (const level of LEVELS) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'level-btn';
+      btn.dataset.level = String(level.id);
+      btn.textContent = String(level.id);
+      btn.title = `Level ${level.id}: ${level.name}`;
+      btn.setAttribute('aria-label', `Level ${level.id}: ${level.name}`);
+      // pointerdown so selection still works if something steals click
+      btn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.selectLevel(level.id);
+      });
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.selectLevel(level.id);
+      });
+      this.levelGrid.appendChild(btn);
+    }
+  }
+
+  selectLevel(level: number): void {
+    this.selectedLevel = clampLevel(level);
+    gameState.startLevel = this.selectedLevel;
+    const def = getLevel(this.selectedLevel);
+    this.levelName.textContent = `Level ${def.id} — ${def.name}`;
+    this.levelGrid.querySelectorAll('.level-btn').forEach((el) => {
+      const btn = el as HTMLButtonElement;
+      const isSelected = Number(btn.dataset.level) === this.selectedLevel;
+      btn.classList.toggle('selected', isSelected);
+      btn.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+    });
+    eventBus.emit(Events.LEVEL_SELECT, { level: this.selectedLevel });
   }
 
   setScreen(screen: ScreenId): void {
@@ -60,16 +118,23 @@ export class UIManager {
   }
 
   showGameOver(won: boolean, score: number): void {
-    this.overTitle.textContent = won ? 'You Win!' : 'Game Over';
-    this.overSub.textContent = won ? 'All Bricks Cleared' : 'Final Score';
+    if (won) {
+      this.overTitle.textContent = 'You Win!';
+      this.overSub.textContent = `Cleared levels ${gameState.startLevel}–${LEVEL_COUNT}`;
+    } else {
+      this.overTitle.textContent = 'Game Over';
+      this.overSub.textContent = `Level ${gameState.level} · Final Score`;
+    }
     this.overScore.textContent = String(score);
     this.hudLevel.textContent = String(gameState.level);
     this.setScreen('over');
   }
 
   syncHud(): void {
+    const def = getLevel(gameState.level);
     this.hudScore.textContent = String(gameState.score);
     this.hudLives.textContent = String(gameState.lives);
-    this.hudLevel.textContent = String(gameState.level);
+    this.hudLevel.textContent = `${gameState.level}/${LEVEL_COUNT}`;
+    void def;
   }
 }

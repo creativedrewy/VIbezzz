@@ -3,9 +3,11 @@ export class InputSystem {
   keys = new Set<string>();
   moveX = 0;
   pointerX = 0;
+  /** True only while mouse/touch should drive the paddle (not after keyboard takes over). */
   hasPointer = false;
   launchPressed = false;
   private _pointerActive = false;
+  private _usingKeyboard = false;
 
   private readonly _onKeyDown: (e: KeyboardEvent) => void;
   private readonly _onKeyUp: (e: KeyboardEvent) => void;
@@ -32,9 +34,22 @@ export class InputSystem {
     this.dom.addEventListener('contextmenu', this._onContext);
   }
 
+  private isPaddleKey(code: string): boolean {
+    return (
+      code === 'ArrowLeft' ||
+      code === 'ArrowRight' ||
+      code === 'KeyA' ||
+      code === 'KeyD'
+    );
+  }
+
   onKeyDown(e: KeyboardEvent): void {
     if (e.repeat) return;
     this.keys.add(e.code);
+    if (this.isPaddleKey(e.code)) {
+      this._usingKeyboard = true;
+      this.hasPointer = false;
+    }
     if (e.code === 'Space' || e.code === 'Enter') {
       e.preventDefault();
       this.launchPressed = true;
@@ -50,6 +65,8 @@ export class InputSystem {
     if (rect.width <= 0) return;
     const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
     this.pointerX = nx;
+    // Moving the pointer reclaims control from keyboard.
+    this._usingKeyboard = false;
     this.hasPointer = true;
   }
 
@@ -68,6 +85,10 @@ export class InputSystem {
     if (this.keys.has('ArrowLeft') || this.keys.has('KeyA')) keyboard -= 1;
     if (this.keys.has('ArrowRight') || this.keys.has('KeyD')) keyboard += 1;
     this.moveX = keyboard;
+    if (keyboard !== 0) {
+      this._usingKeyboard = true;
+      this.hasPointer = false;
+    }
   }
 
   consumeLaunch(): boolean {

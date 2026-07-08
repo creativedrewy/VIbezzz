@@ -3,6 +3,7 @@ import { BRICKS } from '../core/Constants';
 import { createBrickMaterial } from '../shaders/materials';
 import { eventBus, Events } from '../core/EventBus';
 import { gameState } from '../core/GameState';
+import { getLevel, parseLevelLayout } from '../level/Levels';
 import type { Ball } from './Ball';
 
 export type BrickUserData = {
@@ -30,39 +31,47 @@ export class BrickField {
     this.group = new THREE.Group();
     this._sharedGeo = new THREE.BoxGeometry(BRICKS.WIDTH, BRICKS.HEIGHT, BRICKS.DEPTH);
     scene.add(this.group);
-    this.build();
+    this.build(1);
   }
 
-  build(): void {
+  build(levelNumber: number): void {
     this.clear();
-    const totalW = BRICKS.COLS * BRICKS.WIDTH + (BRICKS.COLS - 1) * BRICKS.GAP_X;
+    const level = getLevel(levelNumber);
+    const { cells, cols, rows } = parseLevelLayout(level);
+
+    const totalW = cols * BRICKS.WIDTH + Math.max(0, cols - 1) * BRICKS.GAP_X;
+    const totalH = rows * BRICKS.HEIGHT + Math.max(0, rows - 1) * BRICKS.GAP_Y;
     const startX = -totalW * 0.5 + BRICKS.WIDTH * 0.5;
+    const startY = BRICKS.START_Y - (totalH > 6 ? (totalH - 6 * (BRICKS.HEIGHT + BRICKS.GAP_Y)) * 0.15 : 0);
+
+    const matByColor = new Map<number, THREE.ShaderMaterial>();
     let count = 0;
 
-    for (let row = 0; row < BRICKS.ROWS; row++) {
-      const color = BRICKS.COLORS[row % BRICKS.COLORS.length]!;
-      const points = BRICKS.POINTS[row % BRICKS.POINTS.length]!;
-      const mat = createBrickMaterial(color);
-      this.materials.push(mat);
-
-      for (let col = 0; col < BRICKS.COLS; col++) {
-        const mesh = new THREE.Mesh(this._sharedGeo, mat) as BrickMesh;
-        const x = startX + col * (BRICKS.WIDTH + BRICKS.GAP_X);
-        const y = BRICKS.START_Y - row * (BRICKS.HEIGHT + BRICKS.GAP_Y);
-        mesh.position.set(x, y, 0);
-        mesh.userData = {
-          alive: true,
-          points,
-          halfW: BRICKS.WIDTH * 0.5,
-          halfH: BRICKS.HEIGHT * 0.5,
-          row,
-          col,
-        };
-        this.group.add(mesh);
-        this.bricks.push(mesh);
-        count++;
+    for (const cell of cells) {
+      let mat = matByColor.get(cell.color);
+      if (!mat) {
+        mat = createBrickMaterial(cell.color);
+        matByColor.set(cell.color, mat);
+        this.materials.push(mat);
       }
+
+      const mesh = new THREE.Mesh(this._sharedGeo, mat) as BrickMesh;
+      const x = startX + cell.col * (BRICKS.WIDTH + BRICKS.GAP_X);
+      const y = startY - cell.row * (BRICKS.HEIGHT + BRICKS.GAP_Y);
+      mesh.position.set(x, y, 0);
+      mesh.userData = {
+        alive: true,
+        points: cell.points,
+        halfW: BRICKS.WIDTH * 0.5,
+        halfH: BRICKS.HEIGHT * 0.5,
+        row: cell.row,
+        col: cell.col,
+      };
+      this.group.add(mesh);
+      this.bricks.push(mesh);
+      count++;
     }
+
     gameState.bricksRemaining = count;
   }
 

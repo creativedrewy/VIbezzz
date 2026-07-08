@@ -1,6 +1,11 @@
 import * as THREE from 'three';
 import { CAMERA, COLORS, WORLD, BALL, GAME } from './Constants';
-import { eventBus, Events, type BrickDestroyedPayload } from './EventBus';
+import {
+  eventBus,
+  Events,
+  type BrickDestroyedPayload,
+  type GameStartPayload,
+} from './EventBus';
 import { gameState } from './GameState';
 import { InputSystem } from '../systems/InputSystem';
 import { Paddle } from '../gameplay/Paddle';
@@ -8,6 +13,7 @@ import { Ball } from '../gameplay/Ball';
 import { BrickField } from '../gameplay/BrickField';
 import { UIManager } from '../ui/UIManager';
 import { createPlasmaMaterial, createWallMaterial } from '../shaders/materials';
+import { clampLevel } from '../level/Levels';
 
 type Particle = {
   mesh: THREE.Mesh<THREE.BoxGeometry, THREE.MeshBasicMaterial>;
@@ -160,26 +166,37 @@ export class Game {
   }
 
   setupEventListeners(): void {
-    eventBus.on(Events.GAME_START, () => this.startGame());
+    eventBus.on(Events.GAME_START, (data) => {
+      const payload = (data ?? {}) as GameStartPayload;
+      this.startGame(payload.level);
+    });
     eventBus.on(Events.GAME_RESTART, () => this.restartGame());
+    eventBus.on(Events.GAME_MENU, () => this.returnToMenu());
     eventBus.on(Events.BRICK_DESTROYED, (data) => {
       const payload = data as BrickDestroyedPayload;
       this.spawnBurst(payload.position, payload.color);
     });
   }
 
-  startGame(): void {
-    gameState.reset();
+  startGame(fromLevel?: number): void {
+    const level = clampLevel(fromLevel ?? this.ui.selectedLevel ?? gameState.startLevel);
+    gameState.reset(level);
     gameState.isPlaying = true;
     gameState.screen = 'game';
     this.clearParticles();
-    this.bricks.build();
+    this.loadCurrentLevel();
+    this.ui.setScreen('game');
+    eventBus.emit(Events.SCORE_CHANGED, { score: gameState.score });
+    eventBus.emit(Events.LIVES_CHANGED, { lives: gameState.lives });
+  }
+
+  loadCurrentLevel(): void {
+    gameState.levelTransition = false;
+    this.clearParticles();
+    this.bricks.build(gameState.level);
     this.paddle.reset();
     this.ball.resetOnPaddle(this.paddle.mesh.position.x);
     this.ui.syncHud();
-    this.ui.setScreen('game');
-    eventBus.emit(Events.SCORE_CHANGED, { score: 0 });
-    eventBus.emit(Events.LIVES_CHANGED, { lives: gameState.lives });
   }
 
   clearParticles(): void {
@@ -192,18 +209,51 @@ export class Game {
   }
 
   restartGame(): void {
-    this.startGame();
+    this.startGame(gameState.startLevel);
+  }
+
+  returnToMenu(): void {
+    gameState.isPlaying = false;
+    gameState.levelTransition = false;
+    this.clearParticles();
+    this.ball.resetOnPaddle(0);
+    this.paddle.reset();
+    this.bricks.build(this.ui.selectedLevel);
+    this.ui.setScreen('start');
+  }
+
+  onLevelCleared(): void {
+    if (gameState.levelTransition) return;
+    gameState.levelTransition = true;
+    gameState.score += GAME.WIN_BONUS;
+    eventBus.emit(Events.SCORE_CHANGED, { score: gameState.score });
+    eventBus.emit(Events.LEVEL_CLEARED, { level: gameState.level });
+
+    if (gameState.hasNextLevel()) {
+      gameState.level += 1;
+      // Brief pause then next stage
+      window.setTimeout(() => {
+        if (!gameState.isPlaying) return;
+        this.loadCurrentLevel();
+      }, 650);
+    } else {
+      this.endGame(true);
+    }
   }
 
   endGame(won: boolean): void {
     gameState.isPlaying = false;
     gameState.won = won;
-    if (won) gameState.score += GAME.WIN_BONUS;
+    gameState.levelTransition = false;
+    if (won) {
+      // Final clear already awarded level bonus in onLevelCleared
+    }
     this.ui.showGameOver(won, gameState.score);
     eventBus.emit(Events.GAME_OVER, { won, score: gameState.score });
   }
 
   loseBall(): void {
+    if (gameState.levelTransition) return;
     gameState.lives -= 1;
     eventBus.emit(Events.LIVES_CHANGED, { lives: gameState.lives });
     eventBus.emit(Events.BALL_LOST);
@@ -266,7 +316,7 @@ export class Game {
 
     this.input.update();
 
-    if (gameState.isPlaying) {
+    if (gameState.isPlaying && !gameState.levelTransition) {
       this.paddle.update(dt, this.input, this.playfieldHalf);
 
       if (!this.ball.launched) {
@@ -282,7 +332,7 @@ export class Game {
         this.bricks.collideBall(this.ball);
 
         if (gameState.bricksRemaining <= 0) {
-          this.endGame(true);
+          this.onLevelCleared();
         } else if (this.ball.isLost()) {
           this.loseBall();
         }

@@ -22,7 +22,14 @@
         height: 100%;
         position: relative;
       }
-      canvas { display: block; width: 100%; height: 100%; }
+      canvas {
+        display: block;
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+      }
       .overlay {
         position: absolute;
         inset: 0;
@@ -33,14 +40,16 @@
         text-align: center;
         pointer-events: none;
         opacity: 0;
-        transition: opacity 0.35s ease;
-        z-index: 10;
-        padding-top: max(20px, 8vh, var(--ogp-safe-top-inset, 0px));
-        padding-bottom: var(--ogp-safe-bottom-inset, 0px);
+        visibility: hidden;
+        transition: opacity 0.35s ease, visibility 0.35s ease;
+        z-index: 20;
+        padding: max(20px, 6vh, var(--ogp-safe-top-inset, 0px)) 16px var(--ogp-safe-bottom-inset, 0px);
         background: radial-gradient(ellipse at center, rgba(10,12,40,0.55) 0%, rgba(5,5,16,0.88) 70%);
+        overflow-y: auto;
       }
       .overlay.visible {
         opacity: 1;
+        visibility: visible;
         pointer-events: auto;
       }
       .overlay h1 {
@@ -119,6 +128,88 @@
         text-shadow: 0 0 28px rgba(80, 200, 255, 0.55);
         margin-bottom: 1.5rem;
       }
+      .level-pick {
+        margin: 0.5rem 0 1.4rem;
+        width: min(20rem, 88vw);
+        flex-shrink: 0;
+        position: relative;
+        z-index: 2;
+        pointer-events: auto;
+      }
+      .level-pick-label {
+        font-size: 0.75rem;
+        letter-spacing: 0.28em;
+        text-transform: uppercase;
+        color: #8aa8d8;
+        margin-bottom: 0.55rem;
+      }
+      #level-name {
+        font-size: clamp(0.85rem, 2vw, 1rem);
+        color: #7cf0ff;
+        letter-spacing: 0.12em;
+        margin-bottom: 0.75rem;
+        height: 1.35em;
+        line-height: 1.35em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      #level-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 3rem);
+        grid-template-rows: repeat(2, 3rem);
+        gap: 0.5rem;
+        justify-content: center;
+        pointer-events: auto;
+        position: relative;
+        z-index: 3;
+      }
+      .level-btn {
+        width: 3rem;
+        height: 3rem;
+        min-width: 3rem;
+        min-height: 3rem;
+        max-width: 3rem;
+        max-height: 3rem;
+        box-sizing: border-box;
+        cursor: pointer;
+        border: 1px solid rgba(100, 170, 255, 0.35);
+        background: rgba(20, 36, 80, 0.55);
+        color: #c8dcff;
+        font-size: 0.95rem;
+        font-variant-numeric: tabular-nums;
+        font-family: inherit;
+        padding: 0;
+        border-radius: 4px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        transition: background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease, color 0.12s ease;
+        pointer-events: auto;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .level-btn:hover {
+        border-color: rgba(140, 210, 255, 0.7);
+        box-shadow: 0 0 14px rgba(60, 140, 255, 0.35);
+      }
+      .level-btn.selected {
+        background: linear-gradient(180deg, rgba(50, 120, 220, 0.75), rgba(30, 70, 150, 0.85));
+        border-color: rgba(140, 230, 255, 0.9);
+        color: #fff;
+        box-shadow: 0 0 18px rgba(80, 180, 255, 0.5);
+      }
+      #btn-start {
+        position: relative;
+        z-index: 2;
+      }
+      .over-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        justify-content: center;
+        pointer-events: auto;
+      }
     </style>
   </head>
   <body>
@@ -130,7 +221,12 @@
       </div>
       <div id="screen-start" class="overlay visible">
         <h1>Ball Breaker</h1>
-        <p>Destroy every brick. Move with mouse, touch, or ← → / A D. Launch with click, tap, or Space.</p>
+        <p>Mouse / ←→ / A D to move · Click or Space to launch · Pick a level and start</p>
+        <div class="level-pick">
+          <div class="level-pick-label">Select Level</div>
+          <div id="level-name">Level 1 — Standard</div>
+          <div id="level-grid"></div>
+        </div>
         <button class="btn" id="btn-start" type="button">Start Game</button>
       </div>
 
@@ -138,7 +234,10 @@
         <h1 id="over-title">Game Over</h1>
         <div class="subtitle" id="over-sub">Final Score</div>
         <div class="score-big" id="over-score">0</div>
-        <button class="btn" id="btn-restart" type="button">Play Again</button>
+        <div class="over-actions">
+          <button class="btn" id="btn-restart" type="button">Play Again</button>
+          <button class="btn" id="btn-menu" type="button">Level Select</button>
+        </div>
       </div>
     </div>
     <script type="module" src="/src/main.ts"></script>

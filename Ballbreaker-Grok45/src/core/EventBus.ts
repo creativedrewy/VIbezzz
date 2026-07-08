@@ -52,6 +52,7 @@ export const Events = {
   GAME_OVER: 'game:over',
   GAME_WIN: 'game:win',
   GAME_RESTART: 'game:restart',
+  GAME_MENU: 'game:menu',
   SCREEN_CHANGE: 'screen:change',
   BALL_LAUNCH: 'ball:launch',
   BALL_LOST: 'ball:lost',
@@ -60,6 +61,7 @@ export const Events = {
   SCORE_CHANGED: 'score:changed',
   LIVES_CHANGED: 'lives:changed',
   LEVEL_CLEARED: 'level:cleared',
+  LEVEL_SELECT: 'level:select',
   PADDLE_HIT: 'paddle:hit',
 } as const;
 
@@ -74,3 +76,5 @@ export type ScorePayload = { score: number };
 export type LivesPayload = { lives: number };
 export type ScreenPayload = { screen: string };
 export type GameOverPayload = { won: boolean; score: number };
+export type LevelSelectPayload = { level: number };
+export type GameStartPayload = { level?: number };
