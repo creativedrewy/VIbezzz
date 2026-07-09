@@ -6,11 +6,11 @@ A set of interactive browser experiments and games. Each app is a self-contained
 
 | App | Link | Description |
 | --- | --- | --- |
-| **Ball Breaker — GLM 5.1** | [web/ball-breaker-glm51](web/ball-breaker-glm51/index.html) | A neon brick-breaker built with Three.js. Move the paddle and clear every block. Variant generated with GLM 5.1. |
-| **Ball Breaker — GPT 5.5** | [web/ball-breaker-gpt55](web/ball-breaker-gpt55/index.html) | A futuristic retro brick breaker with Three.js and TypeScript. Mouse, keyboard, or touch controls. Variant generated with GPT 5.5. |
-| **Ball Breaker — Grok 4.5** | [web/ball-breaker-grok45](web/ball-breaker-grok45/index.html) | A 2.5D Arkanoid-style brick breaker with score, lives, and level HUD. Variant generated with Grok 4.5. |
-| **LDraw → GLB Converter** | [web/ldraw-gltf](web/ldraw-gltf/index.html) | Convert LDraw model files into optimized GLB/glTF assets for Three.js and other 3D engines. |
-| **Wheel of Standup** | [web/wheel-of-standup](web/wheel-of-standup/index.html) | A 3D Price-is-Right style spinning wheel built with Three.js — pick who's up next. |
+| **Ball Breaker — GLM 5.1** | [web/ball-breaker-glm51](web/ball-breaker-glm51) | A neon brick-breaker built with Three.js. Move the paddle and clear every block. Variant generated with GLM 5.1. |
+| **Ball Breaker — GPT 5.5** | [web/ball-breaker-gpt55](web/ball-breaker-gpt55) | A futuristic retro brick breaker with Three.js and TypeScript. Mouse, keyboard, or touch controls. Variant generated with GPT 5.5. |
+| **Ball Breaker — Grok 4.5** | [web/ball-breaker-grok45](web/ball-breaker-grok45) | A 2.5D Arkanoid-style brick breaker with score, lives, and level HUD. Variant generated with Grok 4.5. |
+| **LDraw → GLB Converter** | [web/ldraw-gltf](web/ldraw-gltf) | Convert LDraw model files into optimized GLB/glTF assets for Three.js and other 3D engines. |
+| **Wheel of Standup** | [web/wheel-of-standup](web/wheel-of-standup) | A 3D Price-is-Right style spinning wheel built with Three.js — pick who's up next. |
 
 ## Trying it online
 
