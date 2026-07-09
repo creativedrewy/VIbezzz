@@ -9,6 +9,7 @@ A set of interactive browser experiments and games. Each app is a self-contained
 | **Ball Breaker — GLM 5.1** | [BallBreaker-GLM51](BallBreaker-GLM51) | A neon brick-breaker built with Three.js. Move the paddle and clear every block. Variant generated with GLM 5.1. |
 | **Ball Breaker — GPT 5.5** | [BallBreaker-GPT55](BallBreaker-GPT55) | A futuristic retro brick breaker with Three.js and TypeScript. Mouse, keyboard, or touch controls. Variant generated with GPT 5.5. |
 | **Ball Breaker — Grok 4.5** | [Ballbreaker-Grok45](Ballbreaker-Grok45) | A 2.5D Arkanoid-style brick breaker with score, lives, and level HUD. Variant generated with Grok 4.5. |
+| **Ball Breaker — Hy3** | [BallBreaker-Hy3](BallBreaker-Hy3) | A 2.5D neon Arkanoid-style brick breaker with bloom shaders, score, lives, and five levels. Variant generated with Hy3. |
 | **LDraw → GLB Converter** | [LdrawGLTF](LdrawGLTF) | Convert LDraw model files into optimized GLB/glTF assets for Three.js and other 3D engines. |
 | **Wheel of Standup** | [WheelOfStandup](WheelOfStandup) | A 3D Price-is-Right style spinning wheel built with Three.js — pick who's up next. |
 
