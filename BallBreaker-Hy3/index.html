@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>BALL BREAKER</title>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="scene"></canvas>
+
+      <div id="hud" class="hidden">
+        <div class="hud-item">SCORE <span id="score">0</span></div>
+        <div class="hud-item">LEVEL <span id="level">1</span></div>
+        <div class="hud-item">LIVES <span id="lives">3</span></div>
+      </div>
+
+      <div id="startScreen" class="overlay">
+        <h1 class="title">BALL<span>BREAKER</span></h1>
+        <p class="subtitle">2.5D NEON ARKANOID</p>
+        <button id="startBtn" class="btn">PLAY</button>
+        <div class="controls">
+          <p>MOVE&nbsp;&nbsp;<b>Mouse</b> / <b>&#9664; &#9654;</b> / <b>A D</b></p>
+          <p>LAUNCH&nbsp;&nbsp;<b>Click</b> / <b>Space</b></p>
+        </div>
+      </div>
+
+      <div id="gameOverScreen" class="overlay hidden">
+        <h1 class="title danger">GAME OVER</h1>
+        <p class="final">FINAL SCORE <span id="finalScore">0</span></p>
+        <button id="restartBtn" class="btn">RETRY</button>
+        <p class="hint">or press ENTER</p>
+      </div>
+
+      <div id="levelClear" class="overlay transparent hidden">
+        <h2 class="clear-title">LEVEL CLEAR</h2>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
