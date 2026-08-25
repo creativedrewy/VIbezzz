@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#04050c">
+<title>BALL BREAKER DS4FLASH — 2.5D Arcade</title>
+<style>
+  :root {
+    --cyan: #29f6ff;
+    --magenta: #ff4de1;
+    --amber: #ffd23e;
+    --green: #6cff8a;
+    --ink: #04050c;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--ink);
+    color: #e8f6ff;
+    overflow: hidden;
+    font-family: "Arial Black", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none;
+  }
+  #app {
+    position: fixed; inset: 0;
+  }
+  #gl {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    display: block;
+    touch-action: none;
+    cursor: crosshair;
+  }
+
+  .glow-cyan  { text-shadow: 0 0 12px rgba(41,246,255,.9), 0 0 40px rgba(41,246,255,.45); }
+  .glow-pink  { text-shadow: 0 0 12px rgba(255,77,225,.9), 0 0 40px rgba(255,77,225,.45); }
+
+  #hud {
+    position: absolute; top: 0; left: 0; right: 0;
+    padding: 14px 22px 0;
+    display: flex; align-items: flex-start; justify-content: space-between;
+    pointer-events: none;
+    z-index: 5;
+    animation: hudIn .7s ease-out both;
+  }
+  @keyframes hudIn { from { transform: translateY(-24px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .hud-panel { min-width: 130px; }
+  .hud-panel.center { text-align: center; }
+  .hud-panel.right { text-align: right; }
+  .hud-label {
+    font-size: 11px; letter-spacing: 4px; color: rgba(150,220,255,.6);
+    margin-bottom: 3px;
+  }
+  .hud-value {
+    font-size: 30px; font-weight: 900; line-height: 1;
+    color: #eafcff;
+  }
+  #score { color: var(--cyan); text-shadow: 0 0 14px rgba(41,246,255,.7); }
+  #level { color: var(--magenta); text-shadow: 0 0 14px rgba(255,77,225,.7); }
+  #lives { color: var(--green); letter-spacing: 6px; text-shadow: 0 0 10px rgba(108,255,138,.6); font-size: 26px; }
+  #combo {
+    margin-top: 6px; font-size: 15px; font-weight: 900;
+    color: var(--amber); letter-spacing: 2px;
+    opacity: 0; transition: opacity .25s;
+    text-shadow: 0 0 10px rgba(255,210,62,.8);
+  }
+  #combo.on { opacity: 1; }
+
+  #powerbar {
+    position: absolute; left: 22px; top: 74px;
+    width: 150px; height: 5px;
+    background: rgba(255,255,255,.08);
+    border-radius: 3px;
+    opacity: 0;
+    transition: opacity .3s;
+    pointer-events: none;
+    z-index: 5;
+  }
+  #powerbar>.fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--cyan), var(--magenta));
+    border-radius: 3px;
+    box-shadow: 0 0 10px rgba(41,246,255,.7);
+  }
+
+  #banner {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    pointer-events: none;
+    z-index: 6;
+    opacity: 0;
+  }
+  #banner .text {
+    font-size: clamp(34px, 8vw, 72px);
+    font-weight: 900; letter-spacing: 6px;
+    text-align: center;
+  }
+  #banner .sub {
+    margin-top: 10px; font-size: clamp(14px, 3vw, 20px);
+    letter-spacing: 8px; color: rgba(200,240,255,.75);
+  }
+  #banner.show { animation: bannerZoom 1.6s ease-out both; }
+  @keyframes bannerZoom {
+    0% { opacity: 0; transform: scale(.6); filter: blur(6px); }
+    18% { opacity: 1; transform: scale(1.05); filter: blur(0); }
+    30% { transform: scale(1); }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  .overlay {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center;
+    z-index: 10;
+    background: radial-gradient(ellipse at 50% 40%, rgba(8,10,24,.55), rgba(3,4,10,.9) 75%);
+    backdrop-filter: blur(3px);
+    transition: opacity .4s ease, visibility .4s;
+  }
+  .overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+
+  .title {
+    font-size: clamp(44px, 12vw, 118px);
+    font-weight: 900; letter-spacing: 8px; line-height: .95;
+    background: linear-gradient(180deg, #ffffff 0%, #aef6ff 45%, var(--cyan) 100%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 18px rgba(41,246,255,.55)) drop-shadow(0 0 60px rgba(255,77,225,.3));
+  }
+  .title .accent { display:block; font-size: .58em; letter-spacing: 14px; margin-top: 6px;
+    background: linear-gradient(180deg, #ffd9f7 0%, var(--magenta) 100%);
+    -webkit-background-clip: text; background-clip: text;
+  }
+  .sub {
+    margin-top: 18px; font-size: clamp(11px, 2.4vw, 15px);
+    letter-spacing: 7px; color: rgba(170,220,255,.75);
+  }
+  .controls {
+    margin: 30px auto 26px;
+    display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
+  }
+  .ctrl {
+    border: 1px solid rgba(41,246,255,.25);
+    border-radius: 10px;
+    padding: 10px 16px;
+    min-width: 130px;
+    background: rgba(10, 18, 34, .7);
+  }
+  .ctrl b {
+    display: block; font-size: 13px; letter-spacing: 3px;
+    color: var(--cyan); margin-bottom: 5px;
+  }
+  .ctrl span { font-size: 12px; letter-spacing: 1px; color: rgba(200,230,255,.75); font-weight: 400; font-family: system-ui, sans-serif; }
+
+  button.play {
+    padding: 15px 42px;
+    font-size: 20px; font-weight: 900; letter-spacing: 5px;
+    color: #04121a;
+    background: linear-gradient(180deg, #8ffdff, var(--cyan));
+    border: none; border-radius: 40px;
+    cursor: pointer;
+    box-shadow: 0 0 22px rgba(41,246,255,.6), 0 10px 30px rgba(0,0,0,.5);
+    transition: transform .12s ease, box-shadow .12s ease;
+    animation: breathe 2.2s ease-in-out infinite;
+  }
+  button.play:hover { transform: scale(1.07); box-shadow: 0 0 34px rgba(41,246,255,.9); }
+  button.play:active { transform: scale(.96); }
+  .play.pink { background: linear-gradient(180deg, #ffc0f2, var(--magenta)); color: #20051a; box-shadow: 0 0 22px rgba(255,77,225,.6), 0 10px 30px rgba(0,0,0,.5); }
+  @keyframes breathe {
+    0%,100% { box-shadow: 0 0 18px rgba(41,246,255,.5), 0 10px 30px rgba(0,0,0,.5); }
+    50% { box-shadow: 0 0 38px rgba(41,246,255,.95), 0 10px 30px rgba(0,0,0,.5); }
+  }
+  .hint { margin-top: 16px; font-size: 12px; letter-spacing: 3px; color: rgba(150,190,220,.6); }
+
+  .scorecard {
+    margin: 28px 0 26px;
+    padding: 26px 54px;
+    border: 1px solid rgba(255,77,225,.3);
+    border-radius: 16px;
+    background: rgba(12, 8, 24, .75);
+    box-shadow: 0 0 40px rgba(255,77,225,.2), inset 0 0 40px rgba(255,77,225,.08);
+  }
+  .scorecard .big {
+    font-size: clamp(44px, 9vw, 84px); font-weight: 900;
+    color: var(--amber); letter-spacing: 4px;
+    text-shadow: 0 0 18px rgba(255,210,62,.75);
+  }
+  .scorecard .small { margin-top: 8px; font-size: 13px; letter-spacing: 5px; color: rgba(200,220,255,.7); }
+
+  #floaters { position: absolute; inset: 0; pointer-events: none; z-index: 6; }
+  .floater {
+    position: absolute;
+    font-size: 22px; font-weight: 900; letter-spacing: 2px;
+    color: var(--amber);
+    text-shadow: 0 0 12px rgba(255,210,62,.9), 0 2px 4px rgba(0,0,0,.6);
+    transform: translate(-50%, -50%);
+    will-change: transform, opacity;
+  }
+  .floater.big { font-size: 34px; }
+  .floater.cyan { color: var(--cyan); text-shadow: 0 0 12px rgba(41,246,255,.9); }
+  .floater.pink { color: var(--magenta); text-shadow: 0 0 12px rgba(255,77,225,.9); }
+  .floater.green { color: var(--green); text-shadow: 0 0 12px rgba(108,255,138,.9); }
+
+  #soundbar {
+    position: absolute; right: 16px; bottom: 16px;
+    width: 42px; height: 42px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    border: 1px solid rgba(41,246,255,.3);
+    background: rgba(8,16,30,.6);
+    color: var(--cyan); font-size: 18px;
+    z-index: 12; cursor: pointer;
+    transition: all .2s;
+  }
+  #soundbar.muted { color: #556; border-color: rgba(120,120,140,.3); }
+
+  @media (max-width: 600px) {
+    .hud-value { font-size: 22px; }
+    .hud-panel { min-width: 0; }
+    #powerbar { width: 90px; left: 12px; top: 62px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="gl"></canvas>
+
+  <div id="hud">
+    <div class="hud-panel">
+      <div class="hud-label">SCORE</div>
+      <div id="score" class="hud-value">0000000</div>
+      <div id="combo"></div>
+    </div>
+    <div class="hud-panel center">
+      <div class="hud-label">LEVEL</div>
+      <div id="level" class="hud-value">1</div>
+    </div>
+    <div class="hud-panel right">
+      <div class="hud-label">LIVES</div>
+      <div id="lives" class="hud-value">❤❤❤</div>
+    </div>
+  </div>
+
+  <div id="powerbar"><div class="fill"></div></div>
+  <div id="banner">
+    <div class="text" id="banner-text"></div>
+    <div class="sub" id="banner-sub"></div>
+  </div>
+  <div id="floaters"></div>
+
+  <div id="start" class="overlay">
+    <h1 class="title">BALL<span class="accent">⚡ BREAKER</span></h1>
+    <p class="sub">A 2.5D NEON BRICK-SMASHING ARCADE TABLE</p>
+    <div class="controls">
+      <div class="ctrl"><b>MOUSE</b><span>move · click launch</span></div>
+      <div class="ctrl"><b>KEYBOARD</b><span class="glow-cyan" style="color:var(--cyan)">← →</span> or <b style="display:inline">A&nbsp;D</b> · <span class="glow-pink" style="color:var(--magenta)">SPACE</span></div>
+      <div class="ctrl"><b>TOUCH</b><span>drag · tap launch</span></div>
+    </div>
+    <button id="start-btn" class="play">▶ PRESS START</button>
+    <div class="hint">PRESS SPACE OR TAP TO LAUNCH THE BALL</div>
+  </div>
+
+  <div id="gameover" class="overlay hidden">
+    <h1 class="title" style="font-size:clamp(36px,9vw,84px)">GAME <span class="accent">OVER</span></h1>
+    <div class="scorecard">
+      <div class="hud-label">FINAL SCORE</div>
+      <div id="final-score" class="big">0</div>
+      <div id="final-level" class="small"></div>
+    </div>
+    <button id="restart-btn" class="play pink">↻ PLAY AGAIN</button>
+  </div>
+
+  <div id="soundbar" title="toggle sound">♪</div>
+</div>
+<script id="__BUNDLE__"></script>
+</body>
+</html>
