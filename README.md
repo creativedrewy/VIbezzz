@@ -12,6 +12,7 @@ A set of interactive browser experiments and games. Each app is a self-contained
 | **Ball Breaker — Hy3** | [BallBreaker-Hy3](BallBreaker-Hy3) | A 2.5D neon Arkanoid-style brick breaker with bloom shaders, score, lives, and five levels. Variant generated with Hy3. |
 | **LDraw → GLB Converter** | [LdrawGLTF](LdrawGLTF) | Convert LDraw model files into optimized GLB/glTF assets for Three.js and other 3D engines. |
 | **Wheel of Standup** | [WheelOfStandup](WheelOfStandup) | A 3D Price-is-Right style spinning wheel built with Three.js — pick who's up next. |
+| **Maze Generator** | [MazeGenerator](MazeGenerator) | A client-side maze generator: set width and height, play it in the browser jumping spikes, saws, and critters, or download a printable PNG/SVG. Single self-contained HTML file, no build step. |
 
 ## Trying it online
 
@@ -37,4 +38,10 @@ cp -R BallBreaker-GPT55/dist web/ball-breaker-gpt55
 cp -R Ballbreaker-Grok45/dist web/ball-breaker-grok45
 cp -R LdrawGLTF/dist      web/ldraw-gltf
 cp -R WheelOfStandup/dist web/wheel-of-standup
+```
+
+Maze Generator is the exception: it is a single self-contained HTML file with no build step, so its publish copy is a plain file copy:
+
+```sh
+cp MazeGenerator/index.html web/maze-generator/index.html
 ```

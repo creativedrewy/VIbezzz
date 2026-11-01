@@ -1,0 +1,1195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>Maze Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#fdf8ec;
+    --bg2:#f7efdb;
+    --surface:#ffffff;
+    --surface2:#fffaf0;
+    --ink:#1c2434;
+    --ink2:#4a5568;
+    --muted:#7a8499;
+    --line:#e7ddc3;
+    --line-strong:#1c2434;
+    --accent:#e85c28;
+    --accent-dark:#c94a1e;
+    --accent-soft:#ffe9dd;
+    --teal:#0e7c6b;
+    --teal-soft:#d9f2ec;
+    --gold:#e9a820;
+    --gold-soft:#fdf0cd;
+    --danger:#d92d20;
+    --danger-soft:#ffe3df;
+    --wall:#1c2434;
+    --cell-bg:#ffffff;
+    --shadow:0 12px 32px rgba(28,36,52,.10), 0 2px 8px rgba(28,36,52,.06);
+    --radius:18px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#12151f;
+      --bg2:#171b28;
+      --surface:#1d2233;
+      --surface2:#23283d;
+      --ink:#f2f0e9;
+      --ink2:#c3c9d9;
+      --muted:#8b93a9;
+      --line:#2e344c;
+      --line-strong:#f2f0e9;
+      --accent:#ff7a45;
+      --accent-dark:#ff8f63;
+      --accent-soft:#3d2a22;
+      --teal:#2ec4a6;
+      --teal-soft:#17352f;
+      --gold:#f2bc3c;
+      --gold-soft:#3a3018;
+      --danger:#ff6b5e;
+      --danger-soft:#3d2320;
+      --wall:#f2f0e9;
+      --cell-bg:#1d2233;
+      --shadow:0 12px 32px rgba(0,0,0,.35);
+    }
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:var(--bg);
+    background-image:radial-gradient(var(--line) 1px, transparent 1px);
+    background-size:22px 22px;
+    color:var(--ink);
+    font-family:"Inter", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    line-height:1.5;
+  }
+  .wrap{max-width:1060px;margin:0 auto;padding:20px 16px 56px}
+  @media(min-width:760px){.wrap{padding:28px 24px 64px}}
+
+  /* Header */
+  .intro{max-width:680px}
+  .intro h1{
+    font-family:"Bricolage Grotesque", "Inter", system-ui, sans-serif;
+    font-size:clamp(30px,5.4vw,46px);
+    line-height:1.02;
+    letter-spacing:-.02em;
+    font-weight:800;
+    margin:6px 0 10px;
+  }
+  .intro p{margin:0;color:var(--ink2);font-size:16px;max-width:56ch}
+  .intro p b{color:var(--ink)}
+
+  /* Layout */
+  .layout{display:grid;grid-template-columns:1fr;gap:18px;margin-top:22px;align-items:start}
+  @media(min-width:920px){
+    .layout{grid-template-columns:320px 1fr}
+  }
+
+  .panel{
+    background:var(--surface);
+    border:1.5px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:18px;
+  }
+  .panel h2{
+    font-family:"Bricolage Grotesque","Inter",sans-serif;
+    font-size:17px;font-weight:700;letter-spacing:-.01em;margin:0 0 4px;
+  }
+  .panel .sub{font-size:13px;color:var(--muted);margin:0 0 14px}
+
+  /* Controls */
+  .field{margin-bottom:16px}
+  .field-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+  .field-head label{font-size:13px;font-weight:600;letter-spacing:.02em}
+  .field-head output{
+    font-family:"JetBrains Mono",monospace;font-size:13px;font-weight:700;
+    background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:1px 8px;min-width:44px;text-align:center;
+  }
+  input[type=range]{width:100%;accent-color:var(--accent);height:28px;cursor:pointer}
+  .numrow{display:flex;gap:8px;align-items:center}
+  .numrow input[type=number]{
+    width:76px;padding:8px 10px;border-radius:10px;border:1.5px solid var(--line);
+    background:var(--surface2);color:var(--ink);font:inherit;font-size:14px;font-weight:600;
+  }
+  .numrow span{font-size:13px;color:var(--muted)}
+  .presets{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{
+    border:1.5px solid var(--line);background:var(--surface2);color:var(--ink);
+    border-radius:999px;padding:7px 13px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;
+  }
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .seg{display:flex;background:var(--surface2);border:1.5px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+  .seg button{
+    flex:1;border:0;background:transparent;color:var(--ink2);font:inherit;font-size:13px;font-weight:600;
+    padding:8px 4px;border-radius:9px;cursor:pointer;
+  }
+  .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+  .toggle-row{display:flex;gap:8px;flex-wrap:wrap}
+  .toggle{
+    border:1.5px solid var(--line);background:var(--surface2);color:var(--ink);
+    border-radius:10px;padding:8px 12px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;
+    display:inline-flex;align-items:center;gap:7px;
+  }
+  .toggle .dot{width:9px;height:9px;border-radius:50%;background:var(--muted);flex:none}
+  .toggle[aria-pressed="true"]{border-color:var(--teal);color:var(--teal)}
+  .toggle[aria-pressed="true"] .dot{background:var(--teal)}
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    font:inherit;font-weight:700;font-size:15px;cursor:pointer;text-decoration:none;
+    border-radius:12px;padding:12px 18px;border:1.5px solid transparent;
+    transition:transform .08s ease;
+  }
+  .btn:active{transform:scale(.98)}
+  .btn-primary{background:var(--accent);color:#fff;width:100%;font-size:16px;padding:14px 18px}
+  .btn-primary:hover{background:var(--accent-dark)}
+  .btn-dark{background:var(--ink);color:var(--bg)}
+  .btn-ghost{background:var(--surface);border-color:var(--line);color:var(--ink)}
+  .btn-ghost:hover{border-color:var(--ink)}
+  .btn svg{width:17px;height:17px;flex:none}
+  .btn[aria-disabled="true"]{opacity:.45;pointer-events:none}
+  .export-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .export-grid .btn{font-size:13.5px;padding:11px 10px}
+  .export-grid .full{grid-column:1/-1}
+  .hint{font-size:12.5px;color:var(--muted);margin:10px 0 0}
+
+  /* Play area */
+  .stage-panel{padding:14px}
+  @media(min-width:760px){.stage-panel{padding:20px}}
+  .hud{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .stat{
+    flex:1 1 86px;background:var(--surface2);border:1.5px solid var(--line);border-radius:12px;
+    padding:8px 12px;min-width:86px;
+  }
+  .stat .k{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+  .stat .v{font-family:"JetBrains Mono",monospace;font-size:19px;font-weight:700;line-height:1.2}
+  .canvas-shell{
+    background:var(--cell-bg);
+    border:2px solid var(--line-strong);
+    border-radius:14px;
+    overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+    position:relative;
+    touch-action:none;
+  }
+  .canvas-shell.hit{animation:shake .38s ease}
+  @keyframes shake{
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-7px)}40%{transform:translateX(6px)}
+    60%{transform:translateX(-4px)}80%{transform:translateX(3px)}
+  }
+  .layout>*{min-width:0}
+  .canvas-shell{min-width:0}
+  canvas#maze{display:block;max-width:100%;height:auto}
+  .jump-bar{
+    position:absolute;left:10px;bottom:6px;height:6px;border-radius:99px;
+    background:var(--accent);width:0;opacity:0;pointer-events:none;
+    box-shadow:0 1px 4px rgba(0,0,0,.25);max-width:calc(100% - 20px);
+  }
+  .jump-bar.on{opacity:1}
+
+  /* Controls pad */
+  .pad-zone{display:grid;grid-template-columns:1fr;gap:14px;margin-top:16px}
+  @media(min-width:620px){.pad-zone{grid-template-columns:auto 1fr;align-items:center}}
+  .dpad{display:grid;grid-template-columns:repeat(3,58px);grid-template-rows:repeat(3,58px);gap:6px;justify-content:center}
+  .dpad button{
+    border:1.5px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:14px;
+    font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    -webkit-tap-highlight-color:transparent;user-select:none;touch-action:manipulation;
+  }
+  .dpad button:active{background:var(--accent-soft);border-color:var(--accent)}
+  .dpad .jump-btn{
+    grid-column:2;grid-row:2;background:var(--accent);color:#fff;border-color:var(--accent);
+    font-size:12px;font-weight:800;letter-spacing:.06em;
+  }
+  .dpad .jump-btn:active{background:var(--accent-dark)}
+  .dpad .up{grid-column:2;grid-row:1}.dpad .left{grid-column:1;grid-row:2}
+  .dpad .right{grid-column:3;grid-row:2}.dpad .down{grid-column:2;grid-row:3}
+  .keys-help{font-size:13.5px;color:var(--ink2)}
+  .keys-help p{margin:0 0 8px}
+  kbd{
+    font-family:"JetBrains Mono",monospace;font-size:12px;font-weight:700;
+    background:var(--surface2);border:1.5px solid var(--line);border-bottom-width:3px;
+    border-radius:7px;padding:1px 7px;display:inline-block;
+  }
+
+  .howto{margin-top:18px}
+  .howto ol{margin:8px 0 0;padding-left:20px;color:var(--ink2);font-size:14.5px}
+  .howto ol li{margin-bottom:6px}
+  .howto ol b{color:var(--ink)}
+
+  footer{margin-top:22px;font-size:12.5px;color:var(--muted);text-align:center}
+
+  /* Print sheet */
+  .print-sheet{display:none}
+  @media print{
+    body{background:#fff !important;background-image:none !important}
+    .wrap > *:not(.print-sheet){display:none !important}
+    .print-sheet{
+      display:block;color:#000;font-family:Georgia,serif;
+    }
+    .print-sheet h1{font-size:22px;margin:0 0 2px}
+    .print-sheet p{font-size:12px;margin:0 0 12px;color:#333}
+    .print-sheet img{width:100%;max-width:700px;display:block;margin:0 auto}
+    .print-sheet .foot{margin-top:12px;font-size:11px;color:#555;display:flex;justify-content:space-between}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .canvas-shell.hit{animation:none}
+    *{transition:none !important}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="intro">
+    <h1>Make a maze. Then run it — and jump the hazards.</h1>
+  </header>
+
+  <div class="layout">
+
+    <!-- ============ CONTROLS ============ -->
+    <aside class="panel" aria-label="Maze settings">
+      <h2>Maze settings</h2>
+      <p class="sub">Every generate builds a brand-new maze — no two are alike.</p>
+
+      <div class="field">
+        <div class="field-head"><label for="colsRange">Width (columns)</label><output id="colsOut">16</output></div>
+        <input type="range" id="colsRange" min="6" max="32" step="1" value="16">
+        <div class="numrow"><input type="number" id="colsNum" min="6" max="32" value="16" aria-label="Width in columns"><span>columns wide</span></div>
+      </div>
+
+      <div class="field">
+        <div class="field-head"><label for="rowsRange">Height (rows)</label><output id="rowsOut">14</output></div>
+        <input type="range" id="rowsRange" min="6" max="32" step="1" value="14">
+        <div class="numrow"><input type="number" id="rowsNum" min="6" max="32" value="14" aria-label="Height in rows"><span>rows tall</span></div>
+      </div>
+
+      <div class="field">
+        <div class="field-head"><label>Quick size</label></div>
+        <div class="presets">
+          <button class="chip" data-size="10,10" type="button">Small 10×10</button>
+          <button class="chip" data-size="16,14" type="button" aria-pressed="true">Medium 16×14</button>
+          <button class="chip" data-size="24,20" type="button">Large 24×20</button>
+          <button class="chip" data-size="32,26" type="button">Huge 32×26</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-head"><label>Hazards</label></div>
+        <div class="seg" role="group" aria-label="Hazard amount">
+          <button type="button" data-hazard="0" aria-pressed="false">None</button>
+          <button type="button" data-hazard="0.5" aria-pressed="false">Few</button>
+          <button type="button" data-hazard="1" aria-pressed="true">Normal</button>
+          <button type="button" data-hazard="1.7" aria-pressed="false">Spicy</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-head"><label>Extras</label></div>
+        <div class="toggle-row">
+          <button class="toggle" id="solutionToggle" type="button" aria-pressed="false"><span class="dot"></span>Show solution</button>
+          <button class="toggle" id="trailToggle" type="button" aria-pressed="true"><span class="dot"></span>Breadcrumb trail</button>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="generateBtn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+        Generate new maze
+      </button>
+
+      <h2 style="margin-top:22px">Print or download</h2>
+      <div class="export-grid">
+        <a class="btn btn-dark" id="dlPng" href="#" download="maze.png">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 21h16"/></svg>
+          PNG image
+        </a>
+        <a class="btn btn-ghost" id="dlSvg" href="#" download="maze.svg">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 21h16"/></svg>
+          SVG file
+        </a>
+      </div>
+    </aside>
+
+    <!-- ============ PLAY ============ -->
+    <section class="panel stage-panel" aria-label="Playable maze">
+      <div class="hud" aria-label="Game stats">
+        <div class="stat"><div class="k">Time</div><div class="v" id="statTime">0:00</div></div>
+        <div class="stat"><div class="k">Moves</div><div class="v" id="statMoves">0</div></div>
+        <div class="stat"><div class="k">Resets</div><div class="v" id="statResets">0</div></div>
+        <div class="stat"><div class="k">Hazards</div><div class="v" id="statHazards">0</div></div>
+      </div>
+
+      <div class="canvas-shell" id="canvasShell">
+        <canvas id="maze" aria-label="Maze board. Use arrow keys or on-screen pad to move the runner."></canvas>
+        <div class="jump-bar" id="jumpBar"></div>
+      </div>
+
+      <div class="pad-zone">
+        <div class="dpad" aria-label="Movement pad">
+          <button class="up" type="button" data-dir="up" aria-label="Move up">↑</button>
+          <button class="left" type="button" data-dir="left" aria-label="Move left">←</button>
+          <button class="jump-btn" type="button" id="jumpBtn" aria-label="Jump">JUMP</button>
+          <button class="right" type="button" data-dir="right" aria-label="Move right">→</button>
+          <button class="down" type="button" data-dir="down" aria-label="Move down">↓</button>
+        </div>
+        <div class="keys-help">
+          <p><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> or <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> — move one square</p>
+          <p><kbd>Space</kbd> — jump: while you're in the air you can cross hazards safely. Land on a safe square before the jump runs out!</p>
+          <p><kbd>R</kbd> — back to START &nbsp;·&nbsp; <kbd>N</kbd> — new maze</p>
+        </div>
+      </div>
+
+    </section>
+  </div>
+
+  <!-- Print-only sheet -->
+  <div class="print-sheet" aria-hidden="true">
+    <h1>Maze</h1>
+    <p id="printMeta">Find your way from START (top-left) to the FINISH star (bottom-right). Watch out — hop the hazards!</p>
+    <img id="printImg" alt="">
+    <div class="foot"><span>Maze Generator</span><span id="printSize"></span></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- Elements ---------- */
+  var canvas = document.getElementById('maze');
+  var ctx = canvas.getContext('2d');
+  var shell = document.getElementById('canvasShell');
+  var jumpBar = document.getElementById('jumpBar');
+  var statTime = document.getElementById('statTime');
+  var statMoves = document.getElementById('statMoves');
+  var statResets = document.getElementById('statResets');
+  var statHazards = document.getElementById('statHazards');
+
+  function setStatus(msg, kind, icon){
+    // Status banner removed per user request — keep calls as no-ops so
+    // game logic (hit / win handling) continues to work without the box.
+  }
+
+  /* ---------- Settings ---------- */
+  var colsRange = document.getElementById('colsRange'), colsNum = document.getElementById('colsNum'), colsOut = document.getElementById('colsOut');
+  var rowsRange = document.getElementById('rowsRange'), rowsNum = document.getElementById('rowsNum'), rowsOut = document.getElementById('rowsOut');
+  var hazardFactor = 1;
+  var showSolution = false;
+  var showTrail = true;
+
+  function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+  function syncSize(from){
+    var c = clamp(parseInt(from === 'colsNum' ? colsNum.value : colsRange.value, 10) || 16, 6, 32);
+    var r = clamp(parseInt(from === 'rowsNum' ? rowsNum.value : rowsRange.value, 10) || 14, 6, 32);
+    colsRange.value = c; colsNum.value = c; colsOut.textContent = c;
+    rowsRange.value = r; rowsNum.value = r; rowsOut.textContent = r;
+    document.querySelectorAll('.chip').forEach(function(ch){
+      var p = ch.getAttribute('data-size').split(',');
+      ch.setAttribute('aria-pressed', (parseInt(p[0],10) === c && parseInt(p[1],10) === r) ? 'true' : 'false');
+    });
+    return { cols: c, rows: r };
+  }
+  [colsRange, rowsRange].forEach(function(el){ el.addEventListener('input', function(){ syncSize(); }); });
+  [colsNum, rowsNum].forEach(function(el){
+    el.addEventListener('change', function(){ syncSize(el.id); generate(); });
+  });
+  document.querySelectorAll('.chip').forEach(function(ch){
+    ch.addEventListener('click', function(){
+      var p = ch.getAttribute('data-size').split(',');
+      colsRange.value = p[0]; rowsRange.value = p[1];
+      syncSize(); generate();
+    });
+  });
+  document.querySelectorAll('[data-hazard]').forEach(function(b){
+    b.addEventListener('click', function(){
+      document.querySelectorAll('[data-hazard]').forEach(function(x){ x.setAttribute('aria-pressed','false'); });
+      b.setAttribute('aria-pressed','true');
+      hazardFactor = parseFloat(b.getAttribute('data-hazard'));
+      generate();
+    });
+  });
+  var solToggle = document.getElementById('solutionToggle');
+  solToggle.addEventListener('click', function(){
+    showSolution = !showSolution;
+    solToggle.setAttribute('aria-pressed', showSolution ? 'true' : 'false');
+    updateExports();
+  });
+  var trailToggle = document.getElementById('trailToggle');
+  trailToggle.addEventListener('click', function(){
+    showTrail = !showTrail;
+    trailToggle.setAttribute('aria-pressed', showTrail ? 'true' : 'false');
+  });
+
+  /* ---------- Maze generation (recursive backtracker) ---------- */
+  var COLS = 16, ROWS = 14;
+  var cells = [];      // {x,y,walls:{n,e,s,w}, visited}
+  var solution = [];   // array of {x,y} from start to end
+  var hazards = [];    // {x,y,type:'spike'|'saw'|'critter', ax,ay,bx,by, phase}
+  var hazardMap = {};  // "x,y" -> hazard (static ones + critter home cells for print)
+
+  function idx(x, y){ return y * COLS + x; }
+  function key(x, y){ return x + ',' + y; }
+
+  function generateMaze(cols, rows){
+    COLS = cols; ROWS = rows;
+    cells = [];
+    for (var y = 0; y < rows; y++){
+      for (var x = 0; x < cols; x++){
+        cells.push({ x:x, y:y, walls:{ n:true, e:true, s:true, w:true }, visited:false });
+      }
+    }
+    var stack = [cells[0]];
+    cells[0].visited = true;
+    var dirs = [
+      { k:'n', dx:0, dy:-1, opp:'s' },
+      { k:'e', dx:1, dy:0, opp:'w' },
+      { k:'s', dx:0, dy:1, opp:'n' },
+      { k:'w', dx:-1, dy:0, opp:'e' }
+    ];
+    while (stack.length){
+      var cur = stack[stack.length - 1];
+      var options = [];
+      for (var i = 0; i < dirs.length; i++){
+        var d = dirs[i], nx = cur.x + d.dx, ny = cur.y + d.dy;
+        if (nx < 0 || ny < 0 || nx >= cols || ny >= rows) continue;
+        var ncell = cells[idx(nx, ny)];
+        if (!ncell.visited) options.push({ d:d, cell:ncell });
+      }
+      if (!options.length){ stack.pop(); continue; }
+      var pick = options[Math.floor(Math.random() * options.length)];
+      cur.walls[pick.d.k] = false;
+      pick.cell.walls[pick.d.opp] = false;
+      pick.cell.visited = true;
+      stack.push(pick.cell);
+    }
+    computeSolution();
+    placeHazards();
+  }
+
+  function neighborsOf(cell){
+    var out = [];
+    if (!cell.walls.n) out.push(cells[idx(cell.x, cell.y - 1)]);
+    if (!cell.walls.s) out.push(cells[idx(cell.x, cell.y + 1)]);
+    if (!cell.walls.w) out.push(cells[idx(cell.x - 1, cell.y)]);
+    if (!cell.walls.e) out.push(cells[idx(cell.x + 1, cell.y)]);
+    return out;
+  }
+
+  function computeSolution(){
+    var start = cells[0], end = cells[cells.length - 1];
+    var prev = new Map();
+    var q = [start]; prev.set(start, null);
+    while (q.length){
+      var cur = q.shift();
+      if (cur === end) break;
+      var ns = neighborsOf(cur);
+      for (var i = 0; i < ns.length; i++){
+        if (!prev.has(ns[i])){ prev.set(ns[i], cur); q.push(ns[i]); }
+      }
+    }
+    solution = [];
+    var c = end;
+    while (c){ solution.unshift({ x:c.x, y:c.y }); c = prev.get(c); }
+  }
+
+  function placeHazards(){
+    hazards = []; hazardMap = {};
+    if (hazardFactor <= 0) return;
+    var total = COLS * ROWS;
+    // Density scales with board size, anchored on the solution path so the
+    // route itself is challenging, plus a few lurking off-path.
+    // These are targets, not guarantees — the spacing rule below may drop
+    // some hazards on crowded boards (see isClearOfHazards).
+    var onPath = Math.round(solution.length * 0.16 * hazardFactor);
+    var offPath = Math.round(total * 0.03 * hazardFactor);
+    var used = {};
+    used[key(0,0)] = true; used[key(COLS-1, ROWS-1)] = true;
+    // keep the two cells next to start and finish clear so runs start fair
+    [[1,0],[0,1],[COLS-2,ROWS-1],[COLS-1,ROWS-2]].forEach(function(p){ used[key(p[0],p[1])] = true; });
+
+    // Spacing rule (print-first): at least one empty block between any two
+    // obstacles, in every direction including diagonals, so a player on
+    // paper can always land on a clear square between jumps and jump again.
+    // Measured as Chebyshev distance: hazards at (0,0) and (2,0) have cell
+    // (1,0) between them and are allowed; distance 0 or 1 (touching,
+    // side-by-side or corner-to-corner) is not. A critter counts as both
+    // cells it patrols between — its own two cells are one obstacle, so
+    // they are the only exception to the gap.
+    var occupied = []; // {x,y} for every cell any placed hazard covers
+    function isClearOfHazards(x, y){
+      for (var i = 0; i < occupied.length; i++){
+        var o = occupied[i];
+        var cheb = Math.max(Math.abs(x - o.x), Math.abs(y - o.y));
+        if (cheb < 2) return false;
+      }
+      return true;
+    }
+
+    var types = ['spike','saw','critter'];
+    var ti = Math.floor(Math.random() * 3);
+
+    // Returns true only when the hazard was placed. Returns false when the
+    // spot would leave less than one empty block from another hazard — the
+    // caller then tries another spot, and if none works the hazard is
+    // simply dropped (fewer hazards, guaranteed landing space).
+    function addHazard(x, y){
+      if (!isClearOfHazards(x, y)) return false;
+      var type = types[ti % 3];
+      var h = { x:x, y:y, type:type, phase: Math.random() * Math.PI * 2 };
+      if (type === 'critter'){
+        // patrol between this cell and an open neighbour that also keeps
+        // the one-block gap from every other hazard
+        var cell = cells[idx(x,y)];
+        var ns = neighborsOf(cell).filter(function(n){
+          return !used[key(n.x,n.y)] && isClearOfHazards(n.x, n.y);
+        });
+        // shuffle candidates so the patrol direction stays random
+        for (var i = ns.length - 1; i > 0; i--){
+          var j = Math.floor(Math.random() * (i + 1));
+          var t = ns[i]; ns[i] = ns[j]; ns[j] = t;
+        }
+        if (ns.length){
+          var n = ns[0];
+          h.ax = x; h.ay = y; h.bx = n.x; h.by = n.y;
+        } else {
+          h.type = 'spike';
+        }
+      }
+      ti++;
+      hazards.push(h);
+      hazardMap[key(x,y)] = h;
+      used[key(x,y)] = true;
+      occupied.push({ x:x, y:y });
+      if (h.bx !== undefined){
+        used[key(h.bx, h.by)] = true;
+        occupied.push({ x:h.bx, y:h.by });
+      }
+      return true;
+    }
+
+    // On-path hazards: spread along the middle of the solution
+    var pathPool = solution.slice(3, solution.length - 3).filter(function(p){ return !used[key(p.x,p.y)]; });
+    // shuffle
+    for (var i = pathPool.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = pathPool[i]; pathPool[i] = pathPool[j]; pathPool[j] = t;
+    }
+    var placed = 0, guard = 0;
+    while (placed < onPath && pathPool.length && guard < 1000){
+      guard++;
+      var p = pathPool.pop();
+      if (addHazard(p.x, p.y)) placed++;
+      // if addHazard refused, the cell was too close to another hazard —
+      // skip it and keep looking; the hazard is dropped if the path runs out
+    }
+    // Off-path hazards
+    guard = 0;
+    while (placed < onPath + offPath && guard < 2000){
+      guard++;
+      var rx = Math.floor(Math.random() * COLS), ry = Math.floor(Math.random() * ROWS);
+      if (used[key(rx,ry)]) continue;
+      if (addHazard(rx, ry)) placed++;
+    }
+  }
+
+  function staticHazardAt(x, y){
+    var h = hazardMap[key(x,y)];
+    if (h && h.type !== 'critter') return h;
+    return null;
+  }
+  function critterCellAt(h, now){
+    // ping-pong between a and b, period ~1.9s
+    var t = (now / 1900 + h.phase) % 2;
+    var f = t < 1 ? t : 2 - t;
+    // ease steps: critter dwells at ends briefly
+    return { fx: h.ax + (h.bx - h.ax) * f, fy: h.ay + (h.by - h.ay) * f };
+  }
+
+  /* ---------- Game state ---------- */
+  var player = { x:0, y:0 };
+  var trail = [];
+  var moves = 0, resets = 0;
+  var startedAt = null, elapsedMs = 0, timerInt = null, won = false;
+  var jumpUntil = 0, jumpFrom = 0;
+  var JUMP_MS = 1150;
+  var lastHitAt = 0;
+
+  function isAirborne(now){ return now < jumpUntil; }
+
+  function fmtTime(ms){
+    var s = Math.floor(ms / 1000);
+    return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2);
+  }
+  function startTimer(){
+    if (timerInt) return;
+    startedAt = Date.now() - elapsedMs;
+    timerInt = setInterval(function(){
+      if (!won){ elapsedMs = Date.now() - startedAt; statTime.textContent = fmtTime(elapsedMs); }
+    }, 250);
+  }
+  function stopTimer(){ if (timerInt){ clearInterval(timerInt); timerInt = null; } }
+
+  function resetRun(full){
+    player = { x:0, y:0 };
+    trail = [{ x:0, y:0 }];
+    jumpUntil = 0;
+    if (full){
+      moves = 0; resets = 0; elapsedMs = 0; won = false;
+      stopTimer(); statTime.textContent = '0:00';
+    }
+    statMoves.textContent = moves;
+    statResets.textContent = resets;
+  }
+
+  function hazardHit(now){
+    // static hazards
+    if (staticHazardAt(player.x, player.y)) return staticHazardAt(player.x, player.y);
+    // critters: collision if critter's rounded cell == player cell
+    for (var i = 0; i < hazards.length; i++){
+      var h = hazards[i];
+      if (h.type !== 'critter' || h.bx === undefined) continue;
+      var pos = critterCellAt(h, now);
+      if (Math.round(pos.fx) === player.x && Math.round(pos.fy) === player.y) return h;
+    }
+    return null;
+  }
+
+  function doHit(h){
+    var now = performance.now();
+    if (now - lastHitAt < 600) return;
+    lastHitAt = now;
+    resets++;
+    statResets.textContent = resets;
+    player = { x:0, y:0 };
+    trail = [{ x:0, y:0 }];
+    jumpUntil = 0;
+    shell.classList.remove('hit'); void shell.offsetWidth; shell.classList.add('hit');
+    var names = { spike:'The spikes got you!', saw:'The saw blade got you!', critter:'A critter caught you!' };
+    setStatus((names[h.type] || 'A hazard got you!') + ' Back to START — ' + resets + (resets === 1 ? ' reset' : ' resets') + ' so far. Jump (Space) and move quickly to cross hazards.', 'danger', 'warn');
+    if (navigator.vibrate) { try { navigator.vibrate(60); } catch(e){} }
+  }
+
+  function checkLanding(){
+    // called when jump expires or after each move while grounded
+    if (won) return;
+    var now = performance.now();
+    if (!isAirborne(now)){
+      var h = hazardHit(now);
+      if (h) doHit(h);
+    }
+  }
+
+  function tryMove(dir){
+    if (won) return;
+    var cell = cells[idx(player.x, player.y)];
+    var nx = player.x, ny = player.y;
+    if (dir === 'up'){ if (cell.walls.n) return; ny--; }
+    if (dir === 'down'){ if (cell.walls.s) return; ny++; }
+    if (dir === 'left'){ if (cell.walls.w) return; nx--; }
+    if (dir === 'right'){ if (cell.walls.e) return; nx++; }
+    player.x = nx; player.y = ny;
+    moves++; statMoves.textContent = moves;
+    startTimer();
+    if (!showTrail || !trail.length || trail[trail.length-1].x !== nx || trail[trail.length-1].y !== ny){
+      trail.push({ x:nx, y:ny });
+    }
+    if (nx === COLS - 1 && ny === ROWS - 1){
+      won = true; stopTimer();
+      setStatus('You made it to the FINISH in ' + fmtTime(elapsedMs) + ' with ' + moves + ' moves and ' + resets + (resets === 1 ? ' reset' : ' resets') + '! Hit Generate for a fresh maze, or download this one to try on paper.', 'win', 'win');
+      return;
+    }
+    checkLanding();
+  }
+
+  function doJump(){
+    if (won) return;
+    var now = performance.now();
+    if (isAirborne(now)) return;
+    jumpFrom = now; jumpUntil = now + JUMP_MS;
+    startTimer();
+    if (navigator.vibrate) { try { navigator.vibrate(15); } catch(e){} }
+  }
+
+  /* ---------- Drawing (screen) ---------- */
+  var darkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  function cssVar(name){
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+  var cellPx = 28;
+
+  function sizeCanvas(){
+    // Fit the whole board inside the shell: the cell size is whatever the
+    // tighter of the available width / height allows, with NO minimum.
+    // The old Math.max(14, ...) floor forced a 32-wide board to at least
+    // 448px wide; on a phone the shell is only ~300px, so CSS max-width
+    // squeezed the canvas horizontally while its height stayed put —
+    // every cell rendered as a tall rectangle (the "stretched" bug).
+    // Measure with the canvas collapsed first: a canvas sized for a wider
+    // layout (e.g. before rotating a phone or narrowing the window) would
+    // otherwise hold the shell — and the width measured from it — at the
+    // old size, and the new board would stay too wide for the screen.
+    canvas.style.width = '0px';
+    var avail = Math.min(shell.clientWidth - 4, 720);
+    if (avail < 60) avail = Math.min(window.innerWidth - 60, 720);
+    var maxH = Math.max(300, window.innerHeight * 0.72);
+    cellPx = Math.floor(Math.min(avail / COLS, maxH / ROWS));
+    if (!(cellPx >= 4)) cellPx = Math.max(4, Math.min(avail / COLS, maxH / ROWS));
+    var w = Math.round(cellPx * COLS), h = Math.round(cellPx * ROWS);
+    var dpr = window.devicePixelRatio || 1;
+    // Set only the CSS width and let height follow the canvas's intrinsic
+    // aspect ratio (height:auto in CSS + the aspect-ratio below). If the
+    // shell ever ends up narrower than w after sizing (layout settling,
+    // rotation), the board then scales down proportionally in both
+    // dimensions instead of distorting into tall cells.
+    canvas.style.width = w + 'px';
+    canvas.style.height = 'auto';
+    canvas.style.aspectRatio = COLS + ' / ' + ROWS;
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function drawHazardShape(c, h, cx, cy, s, now, printMode){
+    c.save();
+    c.translate(cx, cy);
+    var u = s; // cell size
+    if (h.type === 'spike'){
+      c.fillStyle = printMode ? '#444' : (darkMode ? '#9aa5bd' : '#5b6a86');
+      c.strokeStyle = printMode ? '#000' : (darkMode ? '#e8ebf2' : '#1c2434');
+      c.lineWidth = Math.max(1, u * 0.035);
+      var n = 3, bw = u * 0.8, bh = u * 0.52, base = u * 0.3;
+      for (var i = 0; i < n; i++){
+        var x0 = -bw/2 + (bw/n) * i, x1 = x0 + bw/n;
+        c.beginPath();
+        c.moveTo(x0, base); c.lineTo((x0+x1)/2, base - bh); c.lineTo(x1, base);
+        c.closePath(); c.fill(); c.stroke();
+      }
+      c.fillStyle = printMode ? '#000' : '#d92d20';
+      c.fillRect(-bw/2 - u*0.03, base, bw + u*0.06, u*0.09);
+    } else if (h.type === 'saw'){
+      var rot = printMode ? 0.4 : (now / 700) % (Math.PI * 2);
+      c.rotate(rot);
+      c.fillStyle = printMode ? '#666' : (darkMode ? '#aeb8cc' : '#8492ad');
+      c.strokeStyle = printMode ? '#000' : (darkMode ? '#e8ebf2' : '#1c2434');
+      c.lineWidth = Math.max(1, u * 0.035);
+      var teeth = 9, r1 = u * 0.34, r2 = u * 0.21;
+      c.beginPath();
+      for (var t = 0; t < teeth; t++){
+        var a1 = (t / teeth) * Math.PI * 2, a2 = ((t + 0.5) / teeth) * Math.PI * 2;
+        var px1 = Math.cos(a1) * r1, py1 = Math.sin(a1) * r1;
+        var px2 = Math.cos(a2) * r2, py2 = Math.sin(a2) * r2;
+        if (t === 0) c.moveTo(px1, py1); else c.lineTo(px1, py1);
+        c.lineTo(px2, py2);
+      }
+      c.closePath(); c.fill(); c.stroke();
+      c.beginPath(); c.arc(0, 0, u * 0.09, 0, Math.PI * 2);
+      c.fillStyle = printMode ? '#000' : '#d92d20'; c.fill();
+    } else { // critter — drawn at its patrol position by caller via fx/fy
+      var bob = printMode ? 0 : Math.sin(now / 260 + h.phase) * u * 0.045;
+      c.translate(0, bob);
+      var r = u * 0.31;
+      c.fillStyle = printMode ? '#fff' : '#7c5cd6';
+      c.strokeStyle = printMode ? '#000' : '#4c348f';
+      c.lineWidth = Math.max(1.2, u * 0.045);
+      // horns
+      c.beginPath();
+      c.moveTo(-r*0.7, -r*0.6); c.lineTo(-r*1.05, -r*1.15); c.lineTo(-r*0.25, -r*0.9);
+      c.moveTo(r*0.7, -r*0.6); c.lineTo(r*1.05, -r*1.15); c.lineTo(r*0.25, -r*0.9);
+      c.stroke();
+      // body
+      c.beginPath();
+      c.moveTo(-r, r*0.75);
+      c.quadraticCurveTo(-r, -r, 0, -r);
+      c.quadraticCurveTo(r, -r, r, r*0.75);
+      c.quadraticCurveTo(0, r*1.05, -r, r*0.75);
+      c.closePath(); c.fill(); c.stroke();
+      // eyes
+      c.fillStyle = '#fff';
+      c.beginPath(); c.arc(-r*0.36, -r*0.15, r*0.3, 0, Math.PI*2); c.fill();
+      c.beginPath(); c.arc(r*0.36, -r*0.15, r*0.3, 0, Math.PI*2); c.fill();
+      c.fillStyle = printMode ? '#000' : '#221543';
+      c.beginPath(); c.arc(-r*0.36, -r*0.1, r*0.15, 0, Math.PI*2); c.fill();
+      c.beginPath(); c.arc(r*0.36, -r*0.1, r*0.15, 0, Math.PI*2); c.fill();
+      // fangs
+      c.fillStyle = '#fff'; c.strokeStyle = printMode ? '#000' : '#4c348f'; c.lineWidth = Math.max(0.8, u*0.025);
+      c.beginPath();
+      c.moveTo(-r*0.32, r*0.5); c.lineTo(-r*0.18, r*0.82); c.lineTo(-r*0.04, r*0.5);
+      c.closePath(); c.fill(); c.stroke();
+      c.beginPath();
+      c.moveTo(r*0.04, r*0.5); c.lineTo(r*0.18, r*0.82); c.lineTo(r*0.32, r*0.5);
+      c.closePath(); c.fill(); c.stroke();
+    }
+    c.restore();
+  }
+
+  function drawMaze(c, now, opts){
+    var printMode = opts && opts.print;
+    var s = printMode ? opts.cell : cellPx;
+    var W = s * COLS, H = s * ROWS;
+    var wallCol = printMode ? '#111' : (cssVar('--wall') || '#1c2434');
+    var bgCol = printMode ? '#ffffff' : (cssVar('--cell-bg') || '#fff');
+    c.fillStyle = bgCol;
+    c.fillRect(0, 0, W, H);
+
+    // start / finish cells
+    c.fillStyle = printMode ? '#e6f4ea' : (cssVar('--teal-soft') || '#d9f2ec');
+    c.fillRect(0, 0, s, s);
+    c.fillStyle = printMode ? '#fdf0cd' : (cssVar('--gold-soft') || '#fdf0cd');
+    c.fillRect((COLS-1)*s, (ROWS-1)*s, s, s);
+
+    // solution path
+    if (showSolution && solution.length > 1){
+      c.save();
+      c.strokeStyle = printMode ? '#bbb' : '#e9a820';
+      c.lineWidth = Math.max(2, s * 0.14);
+      c.setLineDash([s*0.22, s*0.18]);
+      c.lineCap = 'round'; c.lineJoin = 'round';
+      c.globalAlpha = printMode ? 0.8 : 0.75;
+      c.beginPath();
+      solution.forEach(function(p, i){
+        var cx = p.x*s + s/2, cy = p.y*s + s/2;
+        if (i === 0) c.moveTo(cx, cy); else c.lineTo(cx, cy);
+      });
+      c.stroke();
+      c.restore();
+    }
+
+    // breadcrumb trail
+    if (!printMode && showTrail && trail.length > 1){
+      c.save();
+      c.fillStyle = darkMode ? 'rgba(255,122,69,.4)' : 'rgba(232,92,40,.32)';
+      trail.forEach(function(p){
+        c.beginPath();
+        c.arc(p.x*s + s/2, p.y*s + s/2, Math.max(2.5, s*0.11), 0, Math.PI*2);
+        c.fill();
+      });
+      c.restore();
+    }
+
+    // hazards (static) + critter patrol path hint
+    hazards.forEach(function(h){
+      if (h.type === 'critter'){
+        if (printMode){
+          // draw patrol dotted line + critter at home cell
+          if (h.bx !== undefined){
+            c.save();
+            c.strokeStyle = '#999'; c.lineWidth = Math.max(1, s*0.04);
+            c.setLineDash([s*0.1, s*0.09]);
+            c.beginPath();
+            c.moveTo(h.ax*s + s/2, h.ay*s + s/2);
+            c.lineTo(h.bx*s + s/2, h.by*s + s/2);
+            c.stroke();
+            c.restore();
+          }
+          drawHazardShape(c, h, h.x*s + s/2, h.y*s + s/2, s, 0, true);
+        }
+        // screen critters drawn in their own pass (moving)
+      } else {
+        drawHazardShape(c, h, h.x*s + s/2, h.y*s + s/2, s, now, printMode);
+      }
+    });
+    if (!printMode){
+      hazards.forEach(function(h){
+        if (h.type !== 'critter' || h.bx === undefined) return;
+        var pos = critterCellAt(h, now);
+        drawHazardShape(c, h, pos.fx*s + s/2, pos.fy*s + s/2, s, now, false);
+      });
+    }
+
+    // walls
+    c.strokeStyle = wallCol;
+    c.lineWidth = printMode ? Math.max(2.5, s*0.09) : Math.max(2.5, s*0.11);
+    c.lineCap = 'round';
+    c.beginPath();
+    cells.forEach(function(cell){
+      var x = cell.x*s, y = cell.y*s;
+      if (cell.walls.n){ c.moveTo(x, y); c.lineTo(x + s, y); }
+      if (cell.walls.w){ c.moveTo(x, y); c.lineTo(x, y + s); }
+      if (cell.x === COLS - 1 && cell.walls.e){ c.moveTo(x + s, y); c.lineTo(x + s, y + s); }
+      if (cell.y === ROWS - 1 && cell.walls.s){ c.moveTo(x, y + s); c.lineTo(x + s, y + s); }
+    });
+    c.stroke();
+
+    // START / FINISH labels + markers
+    var fs = Math.max(9, s * 0.3);
+    c.font = '700 ' + fs + 'px Inter, system-ui, sans-serif';
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillStyle = printMode ? '#0e7c6b' : (cssVar('--teal') || '#0e7c6b');
+    if (printMode) { c.font = '700 ' + Math.max(9, s*0.3) + 'px Inter, system-ui, sans-serif'; c.fillText('START', s/2, s * 0.22); }
+    else if (s >= 26) { c.font = '700 ' + (s*0.19) + 'px Inter, system-ui, sans-serif'; c.fillText('START', s/2, s * 0.13); }
+    // finish star
+    var fx = (COLS-1)*s + s/2, fy = (ROWS-1)*s + s/2;
+    c.save();
+    c.translate(fx, fy + (s >= 24 ? s*0.08 : 0));
+    c.fillStyle = '#e9a820'; c.strokeStyle = printMode ? '#7a5200' : '#9a6d00';
+    c.lineWidth = Math.max(1, s*0.03);
+    var R = s*0.3, r2 = s*0.14;
+    c.beginPath();
+    for (var i = 0; i < 10; i++){
+      var ang = -Math.PI/2 + i * Math.PI/5;
+      var rad = i % 2 === 0 ? R : r2;
+      var px = Math.cos(ang)*rad, py = Math.sin(ang)*rad;
+      if (i === 0) c.moveTo(px, py); else c.lineTo(px, py);
+    }
+    c.closePath(); c.fill(); c.stroke();
+    c.restore();
+
+    if (printMode) return;
+
+    // player
+    var airborne = isAirborne(now);
+    var jumpFrac = airborne ? 1 - (jumpUntil - now) / JUMP_MS : 0;
+    var lift = airborne ? Math.sin(Math.min(1, jumpFrac) * Math.PI) : 0;
+    var pcx = player.x*s + s/2, pcy = player.y*s + s/2;
+    // shadow
+    c.save();
+    c.fillStyle = 'rgba(0,0,0,' + (0.22 - lift*0.13) + ')';
+    c.beginPath();
+    c.ellipse(pcx, pcy + s*0.3, s*0.26*(1 - lift*0.3), s*0.09, 0, 0, Math.PI*2);
+    c.fill();
+    c.restore();
+    var py = pcy - lift * s * 0.42;
+    var pr = s * 0.3 * (1 + lift * 0.18);
+    c.save();
+    c.translate(pcx, py);
+    c.beginPath(); c.arc(0, 0, pr, 0, Math.PI*2);
+    c.fillStyle = '#e85c28'; c.fill();
+    c.lineWidth = Math.max(2, s*0.06); c.strokeStyle = '#fff'; c.stroke();
+    // headband
+    c.beginPath(); c.arc(0, 0, pr, Math.PI*1.12, Math.PI*1.88);
+    c.strokeStyle = '#0e7c6b'; c.lineWidth = Math.max(2, s*0.1); c.stroke();
+    // eyes
+    c.fillStyle = '#fff';
+    c.beginPath(); c.arc(-pr*0.34, -pr*0.08, pr*0.26, 0, Math.PI*2); c.fill();
+    c.beginPath(); c.arc(pr*0.34, -pr*0.08, pr*0.26, 0, Math.PI*2); c.fill();
+    c.fillStyle = '#1c2434';
+    c.beginPath(); c.arc(-pr*0.34, -pr*0.04, pr*0.12, 0, Math.PI*2); c.fill();
+    c.beginPath(); c.arc(pr*0.34, -pr*0.04, pr*0.12, 0, Math.PI*2); c.fill();
+    // smile
+    c.beginPath(); c.arc(0, pr*0.22, pr*0.4, Math.PI*0.2, Math.PI*0.8);
+    c.strokeStyle = '#1c2434'; c.lineWidth = Math.max(1.4, s*0.045); c.stroke();
+    c.restore();
+  }
+
+  /* ---------- Animation loop ---------- */
+  var wasAirborne = false;
+  function loop(now){
+    drawMaze(ctx, now, null);
+    var air = isAirborne(now);
+    if (air){
+      var frac = Math.max(0, (jumpUntil - now) / JUMP_MS);
+      jumpBar.style.width = Math.round(frac * Math.max(0, shell.clientWidth - 20)) + 'px';
+      jumpBar.classList.add('on');
+    } else {
+      jumpBar.classList.remove('on');
+      jumpBar.style.width = '0px';
+      if (wasAirborne){
+        // just landed — if standing on a hazard, it counts
+        checkLanding();
+      }
+    }
+    wasAirborne = air;
+    // critter collisions while grounded (critter walks into player too)
+    if (!won && !air && performance.now() - lastHitAt > 700){
+      var h = hazardHit(now);
+      if (h && h.type === 'critter') doHit(h);
+    }
+    requestAnimationFrame(loop);
+  }
+
+  /* ---------- Exports (PNG / SVG / print) ---------- */
+  var dlPng = document.getElementById('dlPng');
+  var dlSvg = document.getElementById('dlSvg');
+
+  function renderPrintCanvas(cell){
+    var off = document.createElement('canvas');
+    var pad = cell; // margin for labels
+    off.width = COLS * cell + pad * 2;
+    off.height = ROWS * cell + pad * 2 + cell * 0.7;
+    var c = off.getContext('2d');
+    c.fillStyle = '#fff'; c.fillRect(0, 0, off.width, off.height);
+    c.fillStyle = '#111';
+    c.font = '700 ' + Math.round(cell*0.62) + 'px Georgia, serif';
+    c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+    c.fillText('Maze', pad, cell * 0.72);
+    c.font = Math.round(cell*0.34) + 'px Georgia, serif';
+    c.fillStyle = '#444';
+    c.fillText(COLS + ' x ' + ROWS + '  -  START top-left, reach the star. Hop the hazards — land in the clear square between them!', pad, cell * 0.72 + cell*0.48);
+    c.save();
+    c.translate(pad, pad + cell * 0.7);
+    drawMaze(c, 0, { print:true, cell:cell });
+    c.restore();
+    return off;
+  }
+
+  function buildSVG(cell){
+    var s = cell, W = COLS*s, H = ROWS*s;
+    var parts = [];
+    parts.push('<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">');
+    parts.push('<rect width="' + W + '" height="' + H + '" fill="white"/>');
+    parts.push('<rect width="' + s + '" height="' + s + '" fill="#e6f4ea"/>');
+    parts.push('<rect x="' + ((COLS-1)*s) + '" y="' + ((ROWS-1)*s) + '" width="' + s + '" height="' + s + '" fill="#fdf0cd"/>');
+    if (showSolution){
+      var pts = solution.map(function(p){ return (p.x*s + s/2) + ',' + (p.y*s + s/2); }).join(' ');
+      parts.push('<polyline points="' + pts + '" fill="none" stroke="#cccccc" stroke-width="' + (s*0.14) + '" stroke-dasharray="' + (s*0.22) + ' ' + (s*0.18) + '" stroke-linecap="round" stroke-linejoin="round"/>');
+    }
+    hazards.forEach(function(h){
+      var cx = h.x*s + s/2, cy = h.y*s + s/2;
+      if (h.type === 'spike'){
+        var bw = s*0.8, bh = s*0.52, base = s*0.3;
+        for (var i = 0; i < 3; i++){
+          var x0 = cx - bw/2 + (bw/3)*i, x1 = x0 + bw/3;
+          parts.push('<path d="M' + x0 + ' ' + (cy+base) + ' L' + ((x0+x1)/2) + ' ' + (cy+base-bh) + ' L' + x1 + ' ' + (cy+base) + ' Z" fill="#555" stroke="black" stroke-width="1"/>');
+        }
+        parts.push('<rect x="' + (cx-bw/2) + '" y="' + (cy+base) + '" width="' + bw + '" height="' + (s*0.09) + '" fill="black"/>');
+      } else if (h.type === 'saw'){
+        parts.push('<circle cx="' + cx + '" cy="' + cy + '" r="' + (s*0.3) + '" fill="#888" stroke="black" stroke-width="1.5"/>');
+        parts.push('<circle cx="' + cx + '" cy="' + cy + '" r="' + (s*0.08) + '" fill="black"/>');
+        for (var t = 0; t < 8; t++){
+          var a = t/8 * Math.PI*2;
+          parts.push('<circle cx="' + (cx + Math.cos(a)*s*0.3) + '" cy="' + (cy + Math.sin(a)*s*0.3) + '" r="' + (s*0.07) + '" fill="#888" stroke="black" stroke-width="1"/>');
+        }
+      } else {
+        parts.push('<circle cx="' + cx + '" cy="' + cy + '" r="' + (s*0.3) + '" fill="white" stroke="black" stroke-width="2"/>');
+        parts.push('<circle cx="' + (cx - s*0.11) + '" cy="' + (cy - s*0.05) + '" r="' + (s*0.05) + '" fill="black"/>');
+        parts.push('<circle cx="' + (cx + s*0.11) + '" cy="' + (cy - s*0.05) + '" r="' + (s*0.05) + '" fill="black"/>');
+        parts.push('<path d="M' + (cx - s*0.12) + ' ' + (cy + s*0.14) + ' l' + (s*0.06) + ' ' + (s*0.1) + ' l' + (s*0.06) + ' ' + (-s*0.1) + ' l' + (s*0.06) + ' ' + (s*0.1) + ' l' + (s*0.06) + ' ' + (-s*0.1) + '" fill="none" stroke="black" stroke-width="1.5"/>');
+      }
+    });
+    var d = '';
+    cells.forEach(function(cell){
+      var x = cell.x*s, y = cell.y*s;
+      if (cell.walls.n) d += 'M' + x + ' ' + y + 'H' + (x+s);
+      if (cell.walls.w) d += 'M' + x + ' ' + y + 'V' + (y+s);
+      if (cell.x === COLS-1 && cell.walls.e) d += 'M' + (x+s) + ' ' + y + 'V' + (y+s);
+      if (cell.y === ROWS-1 && cell.walls.s) d += 'M' + x + ' ' + (y+s) + 'H' + (x+s);
+    });
+    parts.push('<path d="' + d + '" stroke="#111" stroke-width="' + Math.max(2.5, s*0.09) + '" stroke-linecap="round" fill="none"/>');
+    parts.push('</svg>');
+    return parts.join('\n');
+  }
+
+  function updateExports(){
+    var off = renderPrintCanvas(34);
+    var pngUrl = off.toDataURL('image/png');
+    dlPng.href = pngUrl;
+    dlPng.setAttribute('download', 'maze-' + COLS + 'x' + ROWS + '.png');
+    var svg = buildSVG(30);
+    dlSvg.href = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    dlSvg.setAttribute('download', 'maze-' + COLS + 'x' + ROWS + '.svg');
+    document.getElementById('printImg').src = pngUrl;
+    document.getElementById('printSize').textContent = COLS + ' × ' + ROWS + ' maze';
+    document.getElementById('printMeta').textContent =
+      'Find your way from START (top-left) to the FINISH star (bottom-right). ' +
+      hazards.length + ' hazards are frozen on the page — plan a route that hops each one. ' +
+      'Every hazard has at least one empty square around it, so there is always a clear square to land on between jumps. ' +
+      'Maze size: ' + COLS + ' × ' + ROWS + '.';
+  }
+
+  /* ---------- Generate ---------- */
+  function generate(){
+    var size = syncSize();
+    generateMaze(size.cols, size.rows);
+    resetRun(true);
+    sizeCanvas();
+    statHazards.textContent = hazards.length;
+    setStatus(
+      hazards.length
+        ? 'New ' + COLS + '×' + ROWS + ' maze with ' + hazards.length + ' hazards. Get to the star — and jump anything nasty in your way.'
+        : 'New ' + COLS + '×' + ROWS + ' maze, no hazards. A clean run to the star.',
+      '', 'play'
+    );
+    updateExports();
+    canvas.focus({ preventScroll:true });
+  }
+  document.getElementById('generateBtn').addEventListener('click', generate);
+
+  /* ---------- Input ---------- */
+  document.querySelectorAll('[data-dir]').forEach(function(b){
+    b.addEventListener('click', function(){ tryMove(b.getAttribute('data-dir')); });
+  });
+  document.getElementById('jumpBtn').addEventListener('click', doJump);
+
+  var keyMap = {
+    ArrowUp:'up', ArrowDown:'down', ArrowLeft:'left', ArrowRight:'right',
+    w:'up', s:'down', a:'left', d:'right',
+    W:'up', S:'down', A:'left', D:'right'
+  };
+  document.addEventListener('keydown', function(e){
+    var tag = (e.target && e.target.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    if (e.key === ' ' || e.key === 'Spacebar'){
+      e.preventDefault(); doJump(); return;
+    }
+    if (keyMap[e.key]){ e.preventDefault(); tryMove(keyMap[e.key]); return; }
+    if (e.key === 'r' || e.key === 'R'){ resetRun(false); setStatus('Back at START. Moves and clock keep counting.', '', 'play'); }
+    if (e.key === 'n' || e.key === 'N'){ generate(); }
+  });
+
+  // Tap a neighbouring cell to move; swipe on the board also moves
+  function cellFromEvent(e){
+    var rect = canvas.getBoundingClientRect();
+    var cx = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+    var cy = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+    return { x: Math.floor(cx / (rect.width / COLS)), y: Math.floor(cy / (rect.height / ROWS)) };
+  }
+  canvas.addEventListener('click', function(e){
+    var c = cellFromEvent(e);
+    if (c.x === player.x && c.y === player.y - 1) tryMove('up');
+    else if (c.x === player.x && c.y === player.y + 1) tryMove('down');
+    else if (c.x === player.x - 1 && c.y === player.y) tryMove('left');
+    else if (c.x === player.x + 1 && c.y === player.y) tryMove('right');
+    else if (c.x === player.x && c.y === player.y) doJump();
+  });
+  var touchStart = null;
+  canvas.addEventListener('touchstart', function(e){ touchStart = { x:e.touches[0].clientX, y:e.touches[0].clientY }; }, { passive:true });
+  canvas.addEventListener('touchend', function(e){
+    if (!touchStart) return;
+    var t = e.changedTouches[0];
+    var dx = t.clientX - touchStart.x, dy = t.clientY - touchStart.y;
+    touchStart = null;
+    if (Math.abs(dx) < 18 && Math.abs(dy) < 18) return; // tap handled by click
+    e.preventDefault();
+    if (Math.abs(dx) > Math.abs(dy)) tryMove(dx > 0 ? 'right' : 'left');
+    else tryMove(dy > 0 ? 'down' : 'up');
+  }, { passive:false });
+  // double-tap board = jump
+  var lastTap = 0;
+  canvas.addEventListener('touchend', function(){
+    var now = Date.now();
+    if (now - lastTap < 300) doJump();
+    lastTap = now;
+  }, { passive:true });
+
+  window.addEventListener('resize', function(){ sizeCanvas(); });
+  if (window.matchMedia){
+    var mq = window.matchMedia('(prefers-color-scheme: dark)');
+    var onMq = function(e){ darkMode = e.matches; };
+    if (mq.addEventListener) mq.addEventListener('change', onMq);
+  }
+
+  /* ---------- Boot ---------- */
+  syncSize();
+  generateMaze(COLS, ROWS);
+  resetRun(true);
+  statHazards.textContent = hazards.length;
+  sizeCanvas();
+  updateExports();
+  requestAnimationFrame(loop);
+  // re-size once fonts/layout settle
+  setTimeout(sizeCanvas, 120);
+  setTimeout(sizeCanvas, 600);
+})();
+</script>
+</body>
+</html>
