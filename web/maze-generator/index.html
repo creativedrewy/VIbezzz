@@ -70,27 +70,23 @@
     font-family:"Inter", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
     line-height:1.5;
   }
-  .wrap{max-width:1060px;margin:0 auto;padding:20px 16px 56px}
-  @media(min-width:760px){.wrap{padding:28px 24px 64px}}
+  .wrap{max-width:760px;margin:0 auto;padding:10px 12px 20px}
+  @media(min-width:760px){.wrap{padding:16px 20px 28px}}
 
-  /* Header */
-  .intro{max-width:680px}
-  .intro h1{
-    font-family:"Bricolage Grotesque", "Inter", system-ui, sans-serif;
-    font-size:clamp(30px,5.4vw,46px);
-    line-height:1.02;
-    letter-spacing:-.02em;
-    font-weight:800;
-    margin:6px 0 10px;
+  /* Game header / HUD bar */
+  .game-topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+  .game-title{font-family:"Bricolage Grotesque","Inter",sans-serif;font-size:19px;font-weight:800;letter-spacing:-.02em;line-height:1;margin:0}
+  .options-btn{
+    display:inline-flex;align-items:center;gap:7px;flex:none;
+    background:var(--ink);color:var(--bg);border:1.5px solid var(--ink);
+    font:inherit;font-size:13.5px;font-weight:700;padding:9px 14px;border-radius:999px;cursor:pointer;
+    box-shadow:0 4px 14px rgba(0,0,0,.14);
   }
-  .intro p{margin:0;color:var(--ink2);font-size:16px;max-width:56ch}
-  .intro p b{color:var(--ink)}
+  .options-btn:active{transform:scale(.97)}
+  .options-btn svg{width:16px;height:16px}
 
-  /* Layout */
-  .layout{display:grid;grid-template-columns:1fr;gap:18px;margin-top:22px;align-items:start}
-  @media(min-width:920px){
-    .layout{grid-template-columns:320px 1fr}
-  }
+  /* Layout — single game column */
+  .layout{display:block}
 
   .panel{
     background:var(--surface);
@@ -103,7 +99,8 @@
     font-family:"Bricolage Grotesque","Inter",sans-serif;
     font-size:17px;font-weight:700;letter-spacing:-.01em;margin:0 0 4px;
   }
-  .panel .sub{font-size:13px;color:var(--muted);margin:0 0 14px}
+  .panel .sub,.sheet .sub{font-size:13px;color:var(--muted);margin:0 0 14px}
+  .sheet .btn-primary{margin-top:16px}
 
   /* Controls */
   .field{margin-bottom:16px}
@@ -162,16 +159,17 @@
   .export-grid .full{grid-column:1/-1}
   .hint{font-size:12.5px;color:var(--muted);margin:10px 0 0}
 
-  /* Play area */
-  .stage-panel{padding:14px}
-  @media(min-width:760px){.stage-panel{padding:20px}}
-  .hud{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  /* Play area — the game is the page */
+  .stage-panel{padding:10px}
+  @media(min-width:760px){.stage-panel{padding:14px}}
+  .hud{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
   .stat{
-    flex:1 1 86px;background:var(--surface2);border:1.5px solid var(--line);border-radius:12px;
-    padding:8px 12px;min-width:86px;
+    background:var(--surface2);border:1.5px solid var(--line);border-radius:11px;
+    padding:6px 8px;min-width:0;text-align:center;
   }
-  .stat .k{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
-  .stat .v{font-family:"JetBrains Mono",monospace;font-size:19px;font-weight:700;line-height:1.2}
+  .stat .k{font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+  .stat .v{font-family:"JetBrains Mono",monospace;font-size:17px;font-weight:700;line-height:1.2;white-space:nowrap}
+  @media(min-width:560px){.stat .v{font-size:19px}.stat{padding:8px 10px}}
   .canvas-shell{
     background:var(--cell-bg);
     border:2px solid var(--line-strong);
@@ -197,37 +195,88 @@
   }
   .jump-bar.on{opacity:1}
 
-  /* Controls pad */
-  .pad-zone{display:grid;grid-template-columns:1fr;gap:14px;margin-top:16px}
-  @media(min-width:620px){.pad-zone{grid-template-columns:auto 1fr;align-items:center}}
-  .dpad{display:grid;grid-template-columns:repeat(3,58px);grid-template-rows:repeat(3,58px);gap:6px;justify-content:center}
+  /* Control deck — handheld-controller layout: D-pad left, JUMP right */
+  .control-deck{
+    margin-top:12px;background:var(--ink);border-radius:20px;padding:14px 16px;
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    box-shadow:0 10px 24px rgba(0,0,0,.18);
+    max-width:100%;min-width:0;
+  }
+  @media (prefers-color-scheme: dark){.control-deck{background:#0c0f18;border:1.5px solid var(--line)}}
+  .dpad{display:grid;grid-template-columns:repeat(3,54px);grid-template-rows:repeat(3,54px);gap:5px;flex:none}
+  @media(min-width:521px){.dpad{grid-template-columns:repeat(3,60px);grid-template-rows:repeat(3,60px)}}
   .dpad button{
-    border:1.5px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:14px;
-    font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;
-    -webkit-tap-highlight-color:transparent;user-select:none;touch-action:manipulation;
+    border:1.5px solid rgba(255,255,255,.16);background:#2a3247;color:#fff;border-radius:13px;
+    font-size:21px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    -webkit-tap-highlight-color:transparent;user-select:none;touch-action:manipulation;line-height:1;
+    min-width:0;min-height:0;padding:0;
   }
-  .dpad button:active{background:var(--accent-soft);border-color:var(--accent)}
-  .dpad .jump-btn{
-    grid-column:2;grid-row:2;background:var(--accent);color:#fff;border-color:var(--accent);
-    font-size:12px;font-weight:800;letter-spacing:.06em;
-  }
-  .dpad .jump-btn:active{background:var(--accent-dark)}
+  @media (prefers-color-scheme: dark){.dpad button{background:#23283d}}
+  .dpad button:active{background:var(--accent);border-color:var(--accent)}
   .dpad .up{grid-column:2;grid-row:1}.dpad .left{grid-column:1;grid-row:2}
   .dpad .right{grid-column:3;grid-row:2}.dpad .down{grid-column:2;grid-row:3}
-  .keys-help{font-size:13.5px;color:var(--ink2)}
-  .keys-help p{margin:0 0 8px}
-  kbd{
-    font-family:"JetBrains Mono",monospace;font-size:12px;font-weight:700;
-    background:var(--surface2);border:1.5px solid var(--line);border-bottom-width:3px;
-    border-radius:7px;padding:1px 7px;display:inline-block;
+  .dpad .hub{grid-column:2;grid-row:2;background:transparent;border-color:rgba(255,255,255,.08);pointer-events:none}
+  .dpad .hub::after{content:"";width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.22)}
+  .jump-btn-big{
+    flex:none;width:96px;height:96px;border-radius:50%;
+    background:var(--accent);color:#fff;border:3px solid rgba(255,255,255,.25);
+    font:inherit;font-size:17px;font-weight:800;letter-spacing:.08em;cursor:pointer;
+    box-shadow:0 6px 0 var(--accent-dark),0 10px 20px rgba(0,0,0,.28);
+    -webkit-tap-highlight-color:transparent;user-select:none;touch-action:manipulation;
+  }
+  @media(min-width:521px){.jump-btn-big{width:108px;height:108px;font-size:18px}}
+  .jump-btn-big:active{transform:translateY(4px);box-shadow:0 2px 0 var(--accent-dark),0 6px 14px rgba(0,0,0,.28);background:var(--accent-dark)}
+  /* Narrow phones (~520px and down): shrink the D-pad and JUMP so the
+     two controls sit comfortably side by side inside the deck. */
+  @media(max-width:520px){
+    .control-deck{padding:12px 12px;gap:8px;border-radius:18px}
+    .dpad{grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:4px}
+    .dpad button{font-size:19px;border-radius:11px}
+    .jump-btn-big{width:80px;height:80px;font-size:15px;border-width:2px}
+  }
+  @media(max-width:430px){
+    .control-deck{padding:11px 8px;gap:6px}
+    .dpad{grid-template-columns:repeat(3,42px);grid-template-rows:repeat(3,42px);gap:4px}
+    .dpad button{font-size:18px;border-radius:10px}
+    .jump-btn-big{width:76px;height:76px;font-size:14.5px}
+  }
+  @media(max-width:360px){
+    .control-deck{padding:10px 6px;gap:5px}
+    .dpad{grid-template-columns:repeat(3,37px);grid-template-rows:repeat(3,37px);gap:4px}
+    .dpad button{font-size:16px;border-radius:9px}
+    .jump-btn-big{width:68px;height:68px;font-size:13.5px}
   }
 
-  .howto{margin-top:18px}
-  .howto ol{margin:8px 0 0;padding-left:20px;color:var(--ink2);font-size:14.5px}
-  .howto ol li{margin-bottom:6px}
-  .howto ol b{color:var(--ink)}
-
-  footer{margin-top:22px;font-size:12.5px;color:var(--muted);text-align:center}
+  /* Bottom sheet — all settings / saving lives here */
+  .sheet-backdrop{
+    position:fixed;inset:0;background:rgba(10,12,20,.52);z-index:40;
+    opacity:0;pointer-events:none;transition:opacity .25s ease;
+  }
+  .sheet-backdrop.open{opacity:1;pointer-events:auto}
+  .sheet{
+    position:fixed;left:0;right:0;bottom:0;z-index:50;
+    max-width:760px;margin:0 auto;max-height:88dvh;overflow-y:auto;overscroll-behavior:contain;
+    background:var(--surface);border-radius:24px 24px 0 0;border:1.5px solid var(--line);border-bottom:0;
+    box-shadow:0 -12px 40px rgba(0,0,0,.28);
+    transform:translateY(105%);transition:transform .32s cubic-bezier(.32,.72,.28,1);
+    padding:0 18px calc(22px + env(safe-area-inset-bottom));
+    pointer-events:none;
+  }
+  .sheet.open{transform:translateY(0);pointer-events:auto}
+  .sheet-handle-zone{padding:10px 0 2px;cursor:grab;touch-action:none;position:sticky;top:0;background:var(--surface);z-index:2}
+  .sheet-handle{width:44px;height:5px;border-radius:99px;background:var(--line);margin:0 auto}
+  .sheet-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0 12px;position:sticky;top:17px;background:var(--surface);z-index:2}
+  .sheet-header h2{font-family:"Bricolage Grotesque","Inter",sans-serif;font-size:20px;font-weight:800;margin:0;letter-spacing:-.01em}
+  .sheet-close{
+    flex:none;width:38px;height:38px;border-radius:50%;border:1.5px solid var(--line);
+    background:var(--surface2);color:var(--ink);font-size:17px;cursor:pointer;line-height:1;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .sheet-close:active{transform:scale(.95)}
+  .sheet .panel-section{border-top:1.5px solid var(--line);padding-top:16px;margin-top:16px}
+  .sheet .panel-section:first-of-type{border-top:0;padding-top:0;margin-top:0}
+  .sheet h3{font-family:"Bricolage Grotesque","Inter",sans-serif;font-size:16px;font-weight:700;margin:0 0 10px}
+  body.sheet-locked{overflow:hidden}
 
   /* Print sheet */
   .print-sheet{display:none}
@@ -251,15 +300,27 @@
 <body>
 <div class="wrap">
 
-  <header class="intro">
-    <h1>Make a maze. Then run it — and jump the hazards.</h1>
+  <header class="game-topbar">
+    <h1 class="game-title">Maze Generator</h1>
+    <button class="options-btn" id="openSheetBtn" type="button" aria-haspopup="dialog" aria-controls="bottomSheet">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Maze options
+    </button>
   </header>
 
   <div class="layout">
 
-    <!-- ============ CONTROLS ============ -->
-    <aside class="panel" aria-label="Maze settings">
-      <h2>Maze settings</h2>
+    <!-- ============ BOTTOM SHEET: settings / generate / save ============ -->
+    <div class="sheet-backdrop" id="sheetBackdrop"></div>
+    <div class="sheet" id="bottomSheet" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="sheetTitle">
+      <div class="sheet-handle-zone" id="sheetHandle"><div class="sheet-handle"></div></div>
+      <div class="sheet-header">
+        <h2 id="sheetTitle">Maze options</h2>
+        <button class="sheet-close" id="closeSheetBtn" type="button" aria-label="Close maze options">✕</button>
+      </div>
+    <div aria-label="Maze settings">
+      <div class="panel-section">
+      <h3>Maze settings</h3>
       <p class="sub">Every generate builds a brand-new maze — no two are alike.</p>
 
       <div class="field">
@@ -302,12 +363,15 @@
         </div>
       </div>
 
+      </div>
+
       <button class="btn btn-primary" id="generateBtn" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
         Generate new maze
       </button>
 
-      <h2 style="margin-top:22px">Print or download</h2>
+      <div class="panel-section">
+      <h3>Print or download</h3>
       <div class="export-grid">
         <a class="btn btn-dark" id="dlPng" href="#" download="maze.png">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 21h16"/></svg>
@@ -318,7 +382,9 @@
           SVG file
         </a>
       </div>
-    </aside>
+      </div>
+    </div>
+    </div>
 
     <!-- ============ PLAY ============ -->
     <section class="panel stage-panel" aria-label="Playable maze">
@@ -334,21 +400,16 @@
         <div class="jump-bar" id="jumpBar"></div>
       </div>
 
-      <div class="pad-zone">
+      <div class="control-deck" aria-label="Game controls">
         <div class="dpad" aria-label="Movement pad">
           <button class="up" type="button" data-dir="up" aria-label="Move up">↑</button>
           <button class="left" type="button" data-dir="left" aria-label="Move left">←</button>
-          <button class="jump-btn" type="button" id="jumpBtn" aria-label="Jump">JUMP</button>
+          <span class="hub" aria-hidden="true"></span>
           <button class="right" type="button" data-dir="right" aria-label="Move right">→</button>
           <button class="down" type="button" data-dir="down" aria-label="Move down">↓</button>
         </div>
-        <div class="keys-help">
-          <p><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> or <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> — move one square</p>
-          <p><kbd>Space</kbd> — jump: while you're in the air you can cross hazards safely. Land on a safe square before the jump runs out!</p>
-          <p><kbd>R</kbd> — back to START &nbsp;·&nbsp; <kbd>N</kbd> — new maze</p>
-        </div>
+        <button class="jump-btn-big" type="button" id="jumpBtn" aria-label="Jump">JUMP</button>
       </div>
-
     </section>
   </div>
 
@@ -741,7 +802,7 @@
     canvas.style.width = '0px';
     var avail = Math.min(shell.clientWidth - 4, 720);
     if (avail < 60) avail = Math.min(window.innerWidth - 60, 720);
-    var maxH = Math.max(300, window.innerHeight * 0.72);
+    var maxH = Math.max(260, window.innerHeight * 0.60);
     cellPx = Math.floor(Math.min(avail / COLS, maxH / ROWS));
     if (!(cellPx >= 4)) cellPx = Math.max(4, Math.min(avail / COLS, maxH / ROWS));
     var w = Math.round(cellPx * COLS), h = Math.round(cellPx * ROWS);
@@ -1112,7 +1173,48 @@
     updateExports();
     canvas.focus({ preventScroll:true });
   }
-  document.getElementById('generateBtn').addEventListener('click', generate);
+  /* ---------- Bottom sheet ---------- */
+  var bottomSheet = document.getElementById('bottomSheet');
+  var sheetBackdrop = document.getElementById('sheetBackdrop');
+  var sheetOpen = false;
+  function openSheet(){
+    sheetOpen = true;
+    bottomSheet.classList.add('open');
+    bottomSheet.setAttribute('aria-hidden','false');
+    sheetBackdrop.classList.add('open');
+    document.body.classList.add('sheet-locked');
+    var cb = document.getElementById('closeSheetBtn');
+    if (cb) cb.focus({ preventScroll:true });
+  }
+  function closeSheet(){
+    if (!sheetOpen) return;
+    sheetOpen = false;
+    bottomSheet.classList.remove('open');
+    bottomSheet.setAttribute('aria-hidden','true');
+    sheetBackdrop.classList.remove('open');
+    document.body.classList.remove('sheet-locked');
+  }
+  document.getElementById('openSheetBtn').addEventListener('click', openSheet);
+  document.getElementById('closeSheetBtn').addEventListener('click', closeSheet);
+  sheetBackdrop.addEventListener('click', closeSheet);
+  // Swipe down on the handle / header to dismiss
+  (function(){
+    var handle = document.getElementById('sheetHandle');
+    var startY = null;
+    function start(y){ startY = y; }
+    function end(y){
+      if (startY === null) return;
+      if (y - startY > 55) closeSheet();
+      startY = null;
+    }
+    handle.addEventListener('touchstart', function(e){ start(e.touches[0].clientY); }, { passive:true });
+    handle.addEventListener('touchend', function(e){ end(e.changedTouches[0].clientY); }, { passive:true });
+    handle.addEventListener('pointerdown', function(e){ start(e.clientY); });
+    handle.addEventListener('pointerup', function(e){ end(e.clientY); });
+    handle.addEventListener('click', function(){ /* tap handle does nothing; drag/close button dismiss */ });
+  })();
+
+  document.getElementById('generateBtn').addEventListener('click', function(){ generate(); closeSheet(); });
 
   /* ---------- Input ---------- */
   document.querySelectorAll('[data-dir]').forEach(function(b){
@@ -1126,6 +1228,8 @@
     W:'up', S:'down', A:'left', D:'right'
   };
   document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && sheetOpen){ closeSheet(); return; }
+    if (sheetOpen) return;
     var tag = (e.target && e.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
     if (e.key === ' ' || e.key === 'Spacebar'){
